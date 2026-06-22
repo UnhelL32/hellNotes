@@ -836,7 +836,6 @@
             return;
         }
 
-        // Initialize Audio Device Intent Channels
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
                 mediaRecorder = new MediaRecorder(stream);
@@ -849,10 +848,11 @@
                 mediaRecorder.onstop = () => {
                     const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
                     const fileReader = new FileReader();
-                    fileReader.readAsText(audioBlob);
+                    
+                    // FIXED: Replaced readAsText with readAsDataURL to properly capture raw audio bits
+                    fileReader.readAsDataURL(audioBlob);
                     
                     fileReader.onloadend = () => {
-                        // Generate a Base64 Audio component that safely bypasses local Android path blockades
                         const inlinePlayerHtml = `<p><br><audio controls src="${fileReader.result}"></audio><br></p>`;
                         const canvas = document.getElementById('noteContent');
                         canvas.focus();
@@ -861,7 +861,6 @@
                     };
                 };
 
-                // Trigger timer counter execution threads
                 audioChunks = [];
                 mediaRecorder.start();
                 document.getElementById('recordingHud').classList.add('active');
@@ -1151,4 +1150,3 @@
 </script>
 </body>
 </html>
-    
