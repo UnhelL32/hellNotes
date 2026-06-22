@@ -558,11 +558,11 @@
         </div>
 
         <div class="cloud-toolbar">
-            <span class="cloud-label">📂 Google Drive Cloud Integration:</span>
+            <span class="cloud-label">📂 Google Drive Cloud Backup Integration:</span>
             <div class="cloud-btn-group">
-                <button class="btn btn-secondary btn-small" onclick="downloadBackupJSON()">📥 1. Get Note File</button>
-                <button class="btn btn-secondary btn-small" onclick="launchGoogleDriveDirectly()" style="border-color: var(--accent); color: var(--accent);">🌐 2. Open My Drive</button>
-                <button class="btn btn-secondary btn-small" onclick="triggerLocalJSONRestore()">📤 3. Restore File</button>
+                <button class="btn btn-secondary btn-small" onclick="downloadBackupJSON()">📥 1. Download Notes Backup File</button>
+                <button class="btn btn-secondary btn-small" onclick="launchGoogleDriveDirectly()" style="border-color: var(--accent); color: var(--accent);">🌐 2. Open My Google Drive & Upload</button>
+                <button class="btn btn-secondary btn-small" onclick="triggerLocalJSONRestore()">📤 3. Select Backup File to Restore</button>
             </div>
         </div>
 
@@ -579,7 +579,7 @@
             <input type="text" id="noteTitle" class="note-title-input" placeholder="Untitled Note">
         </div>
 
-        <div id="noteContent" class="editor-content-area" contenteditable="true" placeholder="Start writing something... Add #tags to organize them automatically on your dashboard."></div>
+        <div id="noteContent" class="editor-content-area" contenteditable="true" placeholder="Start writing something... Add #tags to organize them automatically on your dashboard." onkeyup="handleContentTyping(event)"></div>
 
         <div id="attachmentsContainer" class="attachments-display"></div>
 
@@ -649,7 +649,7 @@
 
 <script>
     let appState = {
-        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v10')) || [],
+        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v11')) || [],
         currentNoteId: null,
         lastInteractionDate: null
     };
@@ -723,15 +723,15 @@
         }
     }
 
-    /* DIRECT GOOGLE DRIVE INTEGRATION WORKFLOW SYSTEM */
+    /* DIRECT CLOUD BACKUP & MANUAL RECOVERY METHODS */
     function launchGoogleDriveDirectly() {
-        alert("🚀 Launching Google Drive!\n\nSimply drop your downloaded '.json' backup file into your cloud storage folder, or pick an existing file to upload into step 3.");
+        alert("🚀 Launching Google Drive!\n\nDrag and drop your downloaded '.json' backup file right into your cloud storage folder, or locate any existing backup to download it for step 3.");
         window.open('https://drive.google.com/drive/my-drive', '_blank');
     }
 
     function downloadBackupJSON() {
         if (appState.notes.length === 0) {
-            alert("⚠️ Your notebook dataset is empty. Write a note first before running file exports.");
+            alert("⚠️ Your note dataset is empty. Write a note first before running file exports.");
             return;
         }
         const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState.notes));
@@ -759,7 +759,7 @@
                     if (Array.isArray(importedData)) {
                         if (confirm("⚠️ Overwrite current notebook dataset with this backup file?")) {
                             appState.notes = importedData;
-                            localStorage.setItem('sleek_notes_pro_v10', JSON.stringify(appState.notes));
+                            localStorage.setItem('sleek_notes_pro_v11', JSON.stringify(appState.notes));
                             initHome();
                             alert("✨ Success! Local storage state synchronized perfectly.");
                         }
@@ -810,6 +810,26 @@
         const fontColor = document.getElementById('fontColorPicker').value;
         document.documentElement.style.setProperty('--note-paper-color', paperColor);
         document.documentElement.style.setProperty('--note-font-color', fontColor);
+    }
+
+    function handleContentTyping(event) {
+        const todayStr = new Date().toDateString();
+        
+        if (appState.lastInteractionDate && appState.lastInteractionDate !== todayStr) {
+            const workspace = document.getElementById('noteContent');
+            const separatorHtml = `<div class="timeline-separator" contenteditable="false">✨ Continuous Entry: ${getFormattedDate()}</div><br>`;
+            
+            workspace.innerHTML += separatorHtml;
+            appState.lastInteractionDate = todayStr;
+            document.getElementById('currentDateDisplay').textContent = getFormattedDate();
+            
+            const range = document.createRange();
+            const sel = window.getSelection();
+            range.selectNodeContents(workspace);
+            range.collapse(false);
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
     }
 
     function insertTableWidget() {
@@ -940,7 +960,7 @@
         if (existingIndex > -1) appState.notes[existingIndex] = notePayload;
         else appState.notes.unshift(notePayload);
 
-        localStorage.setItem('sleek_notes_pro_v10', JSON.stringify(appState.notes));
+        localStorage.setItem('sleek_notes_pro_v11', JSON.stringify(appState.notes));
         switchView('homeView'); initHome();
     }
 
@@ -948,7 +968,7 @@
         event.stopPropagation(); 
         if(confirm("Discard this note permanently?")) {
             appState.notes = appState.notes.filter(n => n.id !== id);
-            localStorage.setItem('sleek_notes_pro_v10', JSON.stringify(appState.notes));
+            localStorage.setItem('sleek_notes_pro_v11', JSON.stringify(appState.notes));
             initHome();
         }
     }
