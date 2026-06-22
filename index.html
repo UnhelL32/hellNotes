@@ -216,7 +216,7 @@
             color: #ef4444;
         }
 
-        /* Sleek Homepage Creator Footer Layout Box */
+        /* Homepage Creator Footer Layout Box */
         .creator-info-footer {
             margin-top: auto;
             padding: 1.25rem;
@@ -692,10 +692,15 @@
 
 <script>
     let appState = {
-        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v14')) || [],
+        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v15')) || [],
         currentNoteId: null,
         lastInteractionDate: null
     };
+
+    // Live Recording Engine Configuration Variables
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
 
     function getFormattedDate() {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -766,6 +771,63 @@
         }
     }
 
+    /* MICROPHONE AUDIO RECORDING FRAMEWORK LOGIC */
+    function triggerVoiceNote() {
+        const voiceBtn = document.querySelector('button[title="Voice Note"]');
+        
+        if (!isRecording) {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("🎤 Audio recording API is not supported or accessible within this WebView wrapper.");
+                return;
+            }
+
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        if (event.data.size > 0) audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                        const fileReader = new FileReader();
+                        
+                        fileReader.readAsDataURL(audioBlob);
+                        fileReader.onloadend = () => {
+                            const base64AudioData = fileReader.result;
+                            
+                            // Embed a full player directly inside the editable content area
+                            const inlinePlayerHtml = `<p><br><audio controls src="${base64AudioData}"></audio><br></p>`;
+                            const editorWorkspace = document.getElementById('noteContent');
+                            editorWorkspace.focus();
+                            document.execCommand('insertHTML', false, inlinePlayerHtml);
+                            
+                            appendAttachmentBadge('🎙️ Audio Note');
+                        };
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    voiceBtn.innerText = "🛑";
+                    voiceBtn.style.color = "#ef4444";
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("🎤 Microphone permission denied. Please grant microphone privileges to use voice notes.");
+                });
+        } else {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            }
+            isRecording = false;
+            voiceBtn.innerText = "🎙️";
+            voiceBtn.style.color = "";
+        }
+    }
+
     /* DIRECT AUTO-UPLOAD TO GOOGLE DRIVE PIPELINE */
     function autoUploadAllNotesToDrive() {
         if (appState.notes.length === 0) {
@@ -807,7 +869,7 @@
                     if (Array.isArray(importedData)) {
                         if (confirm("⚠️ Warning: Restoring this file will overwrite your local device workspace notes. Proceed?")) {
                             appState.notes = importedData;
-                            localStorage.setItem('sleek_notes_pro_v14', JSON.stringify(appState.notes));
+                            localStorage.setItem('sleek_notes_pro_v15', JSON.stringify(appState.notes));
                             initHome();
                             alert("🚀 Success! Notebook state populated and restored perfectly.");
                         }
@@ -966,7 +1028,6 @@
     }
 
     /* Attachments Utilities */
-    function triggerVoiceNote() { alert("🎙️ Voice entry attached."); appendAttachmentBadge('🎙️ Voice Note'); }
     function triggerImageAttachment() { alert("🖼️ Image entry attached."); appendAttachmentBadge('🖼️ Image_File.png'); }
     function triggerLinkAttachment() {
         const url = prompt("Enter hyperlink URL:", "https://");
@@ -982,7 +1043,6 @@
         attachments.forEach(att => appendAttachmentBadge(att));
     }
 
-    // Master Save Commit Function
     function saveAndGoHome() {
         const title = document.getElementById('noteTitle').value.trim();
         const content = document.getElementById('noteContent').innerHTML;
