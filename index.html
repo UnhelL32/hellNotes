@@ -67,9 +67,35 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             border-bottom: 1px solid var(--border-color);
             padding-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .cloud-toolbar {
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(15, 23, 42, 0.4);
+            padding: 0.6rem 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+
+        .cloud-btn-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .cloud-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
         }
 
         h1 {
@@ -106,6 +132,12 @@
         .btn-secondary:hover {
             background-color: #273549;
             color: var(--text-main);
+        }
+
+        .btn-small {
+            padding: 0.45rem 0.85rem;
+            font-size: 0.8rem;
+            border-radius: 6px;
         }
 
         .tag-section {
@@ -446,6 +478,62 @@
         .calc-grid button:hover { background: #334155; }
         .calc-grid button.op-btn { color: var(--accent); background: #131c2e; }
 
+        /* Full-screen Fallback Print Preview Modal Overlay */
+        .print-preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff;
+            color: #000000;
+            z-index: 10000;
+            display: none;
+            flex-direction: column;
+            padding: 3rem 2rem;
+            overflow-y: auto;
+        }
+        .print-preview-modal.active {
+            display: flex;
+        }
+        .print-preview-close-btn {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+        .print-preview-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 1.5rem;
+            color: #000000 !important;
+        }
+        .print-preview-body {
+            font-size: 1.15rem;
+            line-height: 1.6;
+            color: #000000 !important;
+        }
+        .print-preview-body .note-table {
+            color: #000000 !important;
+            border-color: #000000 !important;
+        }
+        .print-preview-body .note-table th, .print-preview-body .note-table td {
+            border-color: #000000 !important;
+        }
+        .print-preview-body .timeline-separator {
+            color: #475569 !important;
+            border-bottom-color: #475569 !important;
+        }
+
         .empty-state {
             color: var(--text-muted);
             text-align: center;
@@ -455,12 +543,8 @@
 
         @media print {
             body { background: white !important; color: black !important; padding: 0; }
-            .container { border: none !important; box-shadow: none !important; background: transparent !important; }
-            #homeView, .editor-top-bar, .editor-footer, .calc-widget, .delete-card-btn { display: none !important; }
-            #editorView { display: flex !important; background: transparent !important; padding: 0 !important; }
-            .note-title-input { color: black !important; border-bottom: 2px solid #000 !important; }
-            .editor-content-area { color: black !important; overflow: visible !important; }
-            .note-table, .note-table th, .note-table td { border-color: #000 !important; color: black !important; }
+            .container, .print-preview-close-btn { display: none !important; }
+            .print-preview-modal { display: flex !important; position: static !important; width: 100% !important; height: auto !important; padding: 0 !important; }
         }
     </style>
 </head>
@@ -472,6 +556,16 @@
             <h1>Personal Notebook</h1>
             <button class="btn" onclick="openNewNoteView()">📝 Write New Note</button>
         </div>
+
+        <div class="cloud-toolbar">
+            <span class="cloud-label">📂 Google Drive Cloud Integration:</span>
+            <div class="cloud-btn-group">
+                <button class="btn btn-secondary btn-small" onclick="downloadBackupJSON()">📥 1. Get Note File</button>
+                <button class="btn btn-secondary btn-small" onclick="launchGoogleDriveDirectly()" style="border-color: var(--accent); color: var(--accent);">🌐 2. Open My Drive</button>
+                <button class="btn btn-secondary btn-small" onclick="triggerLocalJSONRestore()">📤 3. Restore File</button>
+            </div>
+        </div>
+
         <div id="notesContainer"></div>
     </div>
 
@@ -546,9 +640,16 @@
     </div>
 </div>
 
+<div id="printPreviewModal" class="print-preview-modal">
+    <button class="print-preview-close-btn" onclick="closePrintPreview()">✕ Close Preview</button>
+    <div id="printModalDate" style="text-align: right; font-weight: 500; font-size: 0.95rem; margin-bottom: 0.5rem;"></div>
+    <div id="printModalTitle" class="print-preview-title"></div>
+    <div id="printModalContent" class="print-preview-body"></div>
+</div>
+
 <script>
     let appState = {
-        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v7')) || [],
+        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v10')) || [],
         currentNoteId: null,
         lastInteractionDate: null
     };
@@ -622,6 +723,53 @@
         }
     }
 
+    /* DIRECT GOOGLE DRIVE INTEGRATION WORKFLOW SYSTEM */
+    function launchGoogleDriveDirectly() {
+        alert("🚀 Launching Google Drive!\n\nSimply drop your downloaded '.json' backup file into your cloud storage folder, or pick an existing file to upload into step 3.");
+        window.open('https://drive.google.com/drive/my-drive', '_blank');
+    }
+
+    function downloadBackupJSON() {
+        if (appState.notes.length === 0) {
+            alert("⚠️ Your notebook dataset is empty. Write a note first before running file exports.");
+            return;
+        }
+        const jsonString = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState.notes));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", jsonString);
+        downloadAnchor.setAttribute("download", `Notebook_Backup_${new Date().toISOString().slice(0,10)}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+
+    function triggerLocalJSONRestore() {
+        const fileSelector = document.createElement('input');
+        fileSelector.setAttribute("type", "file");
+        fileSelector.setAttribute("accept", ".json");
+        
+        fileSelector.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.readAsText(file, 'UTF-8');
+            
+            reader.onload = (readerEvent) => {
+                try {
+                    const importedData = JSON.parse(readerEvent.target.result);
+                    if (Array.isArray(importedData)) {
+                        if (confirm("⚠️ Overwrite current notebook dataset with this backup file?")) {
+                            appState.notes = importedData;
+                            localStorage.setItem('sleek_notes_pro_v10', JSON.stringify(appState.notes));
+                            initHome();
+                            alert("✨ Success! Local storage state synchronized perfectly.");
+                        }
+                    } else { alert("❌ Format error: Selected file is invalid."); }
+                } catch(err) { alert("❌ Error parsing the notebook data."); }
+            }
+        };
+        fileSelector.click();
+    }
+
     function openNewNoteView() {
         appState.currentNoteId = 'NOTE-' + Date.now();
         appState.lastInteractionDate = new Date().toDateString();
@@ -683,7 +831,20 @@
         document.execCommand('insertHTML', false, tableHtml);
     }
 
-    function printActiveNote() { window.print(); }
+    function printActiveNote() {
+        const title = document.getElementById('noteTitle').value || 'Untitled Note';
+        const date = document.getElementById('currentDateDisplay').textContent;
+        const content = document.getElementById('noteContent').innerHTML;
+
+        document.getElementById('printModalDate').innerText = date;
+        document.getElementById('printModalTitle').innerText = title;
+        document.getElementById('printModalContent').innerHTML = content;
+        document.getElementById('printPreviewModal').classList.add('active');
+
+        try { window.print(); } catch (e) { console.log("Blocked by mobile wrapper environment."); }
+    }
+
+    function closePrintPreview() { document.getElementById('printPreviewModal').classList.remove('active'); }
 
     function getCleanNoteText() {
         const title = document.getElementById('noteTitle').value || 'Untitled Note';
@@ -692,50 +853,31 @@
         return `Title: ${title}\n\nContent:\n${tempDiv.textContent || tempDiv.innerText || ''}`;
     }
 
-    /* Production-Ready Universal Sharing Engines with Clipboard Copy Fallbacks */
     function fallbackCopyToClipboard(text, targetService) {
         navigator.clipboard.writeText(text).then(() => {
-            alert(`📋 Protocol redirection not allowed by your app container.\n\nYour note has been copied to the clipboard instead! You can now paste it directly into ${targetService}.`);
+            alert(`📋 Protocol redirection locked by browser container.\n\nNote copied instead! Go ahead and paste into ${targetService}.`);
         }).catch(() => {
-            // Secondary textarea creation strategy for restrictive WebView clients
             const textArea = document.createElement("textarea");
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            document.execCommand('copy');
+            textArea.value = text; document.body.appendChild(textArea);
+            textArea.select(); document.execCommand('copy');
             document.body.removeChild(textArea);
-            alert(`📋 Note text saved to your device clipboard! Paste it directly into ${targetService}.`);
+            alert(`📋 Saved backup text to device clipboard for ${targetService}!`);
         });
     }
 
     function shareViaEmail() {
         const title = document.getElementById('noteTitle').value || 'Note Summary';
         const noteText = getCleanNoteText();
-        
-        // Use standard window context targeting to avoid browser frame lockouts
         const mailtoUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(noteText)}`;
-        
-        // Automated fallback check loop
         const syncWindow = window.open(mailtoUrl, '_blank');
-        if (!syncWindow || syncWindow.closed || typeof syncWindow === 'undefined') {
-            fallbackCopyToClipboard(noteText, "your Email app");
-        } else {
-            // Handle silent inline failures inside webviews
-            setTimeout(() => {
-                fallbackCopyToClipboard(noteText, "your Email app");
-            }, 500);
-        }
+        if (!syncWindow || syncWindow.closed || typeof syncWindow === 'undefined') { fallbackCopyToClipboard(noteText, "your Email app"); }
     }
 
     function shareViaWhatsApp() {
         const noteText = getCleanNoteText();
-        // Force the universal global web endpoint instead of native protocol deep-links
         const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(noteText)}`;
-        
         const syncWindow = window.open(whatsappUrl, '_blank');
-        if (!syncWindow) {
-            fallbackCopyToClipboard(noteText, "WhatsApp");
-        }
+        if (!syncWindow) { fallbackCopyToClipboard(noteText, "WhatsApp"); }
     }
 
     /* Calculator Mechanics */
@@ -744,26 +886,15 @@
     function inputCalcNum(num) {
         const screen = document.getElementById('calcScreen');
         if (screen.innerText === "0" && num !== ".") calcExpression = "";
-        calcExpression += num;
-        screen.innerText = calcExpression;
+        calcExpression += num; screen.innerText = calcExpression;
     }
-    function inputCalcOp(op) {
-        calcExpression += " " + op + " ";
-        document.getElementById('calcScreen').innerText = calcExpression;
-    }
-    function clearCalc() {
-        calcExpression = "";
-        document.getElementById('calcScreen').innerText = "0";
-    }
+    function inputCalcOp(op) { calcExpression += " " + op + " "; document.getElementById('calcScreen').innerText = calcExpression; }
+    function clearCalc() { calcExpression = ""; document.getElementById('calcScreen').innerText = "0"; }
     function calculateResult() {
         try {
             const result = Function('"use strict";return (' + calcExpression + ')')();
-            document.getElementById('calcScreen').innerText = result;
-            calcExpression = result.toString();
-        } catch (e) {
-            document.getElementById('calcScreen').innerText = "Error";
-            calcExpression = "";
-        }
+            document.getElementById('calcScreen').innerText = result; calcExpression = result.toString();
+        } catch (e) { document.getElementById('calcScreen').innerText = "Error"; calcExpression = ""; }
     }
 
     /* Attachments Utilities */
@@ -776,13 +907,10 @@
     function appendAttachmentBadge(label) {
         const container = document.getElementById('attachmentsContainer');
         const badge = document.createElement('span');
-        badge.className = 'attachment-badge';
-        badge.innerText = label;
-        container.appendChild(badge);
+        badge.className = 'attachment-badge'; badge.innerText = label; container.appendChild(badge);
     }
     function renderAttachments(attachments) {
-        const container = document.getElementById('attachmentsContainer');
-        container.innerHTML = '';
+        const container = document.getElementById('attachmentsContainer'); container.innerHTML = '';
         attachments.forEach(att => appendAttachmentBadge(att));
     }
 
@@ -797,9 +925,7 @@
         tempDiv.innerHTML = content;
         
         if (!title && !tempDiv.textContent.trim() && tempDiv.getElementsByTagName('table').length === 0) {
-            switchView('homeView');
-            initHome();
-            return;
+            switchView('homeView'); initHome(); return;
         }
 
         let attachmentsArray = [];
@@ -807,28 +933,22 @@
 
         const existingIndex = appState.notes.findIndex(n => n.id === appState.currentNoteId);
         const notePayload = {
-            id: appState.currentNoteId,
-            title: title || 'Untitled Note',
-            content: content,
-            date: date,
-            attachments: attachmentsArray,
-            paperColor: paperColor,
-            fontColor: fontColor
+            id: appState.currentNoteId, title: title || 'Untitled Note', content: content, date: date,
+            attachments: attachmentsArray, paperColor: paperColor, fontColor: fontColor
         };
 
         if (existingIndex > -1) appState.notes[existingIndex] = notePayload;
         else appState.notes.unshift(notePayload);
 
-        localStorage.setItem('sleek_notes_pro_v7', JSON.stringify(appState.notes));
-        switchView('homeView');
-        initHome();
+        localStorage.setItem('sleek_notes_pro_v10', JSON.stringify(appState.notes));
+        switchView('homeView'); initHome();
     }
 
     function deleteNote(event, id) {
         event.stopPropagation(); 
         if(confirm("Discard this note permanently?")) {
             appState.notes = appState.notes.filter(n => n.id !== id);
-            localStorage.setItem('sleek_notes_pro_v7', JSON.stringify(appState.notes));
+            localStorage.setItem('sleek_notes_pro_v10', JSON.stringify(appState.notes));
             initHome();
         }
     }
