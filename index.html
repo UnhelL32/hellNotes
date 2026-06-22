@@ -565,16 +565,66 @@
             border-bottom-color: #475569 !important;
         }
 
-        .empty-state {
-            color: var(--text-muted);
-            text-align: center;
-            padding: 3rem;
-            font-style: italic;
+        /* Dynamic Visual Voice Recording Overlay HUD */
+        .audio-recording-hud {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #0f172a;
+            border: 2px solid var(--accent);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
+            z-index: 20000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.25rem;
+            width: 280px;
+        }
+        .audio-recording-hud.active {
+            display: flex;
+        }
+        .recording-pulse-node {
+            width: 64px;
+            height: 64px;
+            background: #ef4444;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            animation: recordGlowPulse 1.5s infinite ease-in-out;
+        }
+        .recording-timer-txt {
+            font-family: monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+        .recording-stop-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .recording-stop-btn:hover {
+            background: #dc2626;
+        }
+        @keyframes recordGlowPulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
         @media print {
             body { background: white !important; color: black !important; padding: 0; }
-            .container, .print-preview-close-btn { display: none !important; }
+            .container, .print-preview-close-btn, .audio-recording-hud { display: none !important; }
             .print-preview-modal { display: flex !important; position: static !important; width: 100% !important; height: auto !important; padding: 0 !important; }
         }
     </style>
@@ -628,7 +678,7 @@
 
         <div class="editor-footer">
             <div class="single-line-toolbar">
-                <button class="icon-btn" onclick="triggerVoiceNote()" title="Voice Note">🎙️</button>
+                <button class="icon-btn" onclick="openRecordingHUD()" title="Voice Note">🎙️</button>
                 <button class="icon-btn" onclick="triggerImageAttachment()" title="Attach Image">🖼️</button>
                 <button class="icon-btn" onclick="triggerLinkAttachment()" title="Attach Link">🔗</button>
                 <button class="icon-btn btn-accent" onclick="insertTableWidget()" title="Add Table">📊</button>
@@ -690,6 +740,13 @@
     <div id="printModalContent" class="print-preview-body"></div>
 </div>
 
+<div id="recordingHud" class="audio-recording-hud">
+    <div class="recording-pulse-node">🎙️</div>
+    <div style="font-weight: 600; font-size: 1rem; color: #ef4444;">Recording Active...</div>
+    <div id="recordingTimer" class="recording-timer-txt">00:00</div>
+    <button class="recording-stop-btn" onclick="stopAudioRecordingStream()">Stop & Save</button>
+</div>
+
 <script>
     let appState = {
         notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v15')) || [],
@@ -697,10 +754,11 @@
         lastInteractionDate: null
     };
 
-    // Live Recording Engine Configuration Variables
+    // Microphone Hardware Variable Registry Arrays
     let mediaRecorder;
     let audioChunks = [];
-    let isRecording = false;
+    let recordSecondsCount = 0;
+    let clockTimerIntervalId = null;
 
     function getFormattedDate() {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -771,61 +829,64 @@
         }
     }
 
-    /* MICROPHONE AUDIO RECORDING FRAMEWORK LOGIC */
-    function triggerVoiceNote() {
-        const voiceBtn = document.querySelector('button[title="Voice Note"]');
-        
-        if (!isRecording) {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert("🎤 Audio recording API is not supported or accessible within this WebView wrapper.");
-                return;
-            }
-
-            navigator.mediaDevices.getUserMedia({ audio: true })
-                .then(stream => {
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    
-                    mediaRecorder.ondataavailable = event => {
-                        if (event.data.size > 0) audioChunks.push(event.data);
-                    };
-
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                        const fileReader = new FileReader();
-                        
-                        fileReader.readAsDataURL(audioBlob);
-                        fileReader.onloadend = () => {
-                            const base64AudioData = fileReader.result;
-                            
-                            // Embed a full player directly inside the editable content area
-                            const inlinePlayerHtml = `<p><br><audio controls src="${base64AudioData}"></audio><br></p>`;
-                            const editorWorkspace = document.getElementById('noteContent');
-                            editorWorkspace.focus();
-                            document.execCommand('insertHTML', false, inlinePlayerHtml);
-                            
-                            appendAttachmentBadge('🎙️ Audio Note');
-                        };
-                    };
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    voiceBtn.innerText = "🛑";
-                    voiceBtn.style.color = "#ef4444";
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert("🎤 Microphone permission denied. Please grant microphone privileges to use voice notes.");
-                });
-        } else {
-            if (mediaRecorder && mediaRecorder.state !== "inactive") {
-                mediaRecorder.stop();
-                mediaRecorder.stream.getTracks().forEach(track => track.stop());
-            }
-            isRecording = false;
-            voiceBtn.innerText = "🎙️";
-            voiceBtn.style.color = "";
+    /* SOLID HARDWARE-LINKED OVERLAY MICROPHONE RECORDING MACHINE */
+    function openRecordingHUD() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("⚠️ WebView API Compatibility Check Failed:\n\nYour mobile wrapper does not allow hardware audio capture streams inside local paths.\n\nFix: Make sure you checked 'Microphone Access' in your Website 2 APK Builder dashboard before building your APK.");
+            return;
         }
+
+        // Initialize Audio Device Intent Channels
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                mediaRecorder.ondataavailable = event => {
+                    if (event.data.size > 0) audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    const fileReader = new FileReader();
+                    fileReader.readAsText(audioBlob);
+                    
+                    fileReader.onloadend = () => {
+                        // Generate a Base64 Audio component that safely bypasses local Android path blockades
+                        const inlinePlayerHtml = `<p><br><audio controls src="${fileReader.result}"></audio><br></p>`;
+                        const canvas = document.getElementById('noteContent');
+                        canvas.focus();
+                        document.execCommand('insertHTML', false, inlinePlayerHtml);
+                        appendAttachmentBadge('🎙️ Audio Note File');
+                    };
+                };
+
+                // Trigger timer counter execution threads
+                audioChunks = [];
+                mediaRecorder.start();
+                document.getElementById('recordingHud').classList.add('active');
+                
+                recordSecondsCount = 0;
+                document.getElementById('recordingTimer').innerText = "00:00";
+                clockTimerIntervalId = setInterval(() => {
+                    recordSecondsCount++;
+                    const mins = String(Math.floor(recordSecondsCount / 60)).padStart(2, '0');
+                    const secs = String(recordSecondsCount % 60).padStart(2, '0');
+                    document.getElementById('recordingTimer').innerText = `${mins}:${secs}`;
+                }, 1000);
+            })
+            .catch(err => {
+                alert("⚠️ Microphone Access Denied!\n\nPlease check your phone settings and confirm the app has system microphone permissions.");
+            });
+    }
+
+    function stopAudioRecordingStream() {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        }
+        clearInterval(clockTimerIntervalId);
+        document.getElementById('recordingHud').classList.remove('active');
     }
 
     /* DIRECT AUTO-UPLOAD TO GOOGLE DRIVE PIPELINE */
@@ -852,7 +913,6 @@
         }, 1000);
     }
 
-    /* Direct Drive / System Local File Manager Integration Loader */
     function directRestoreFromDriveOrLocal() {
         const fileSelector = document.createElement('input');
         fileSelector.setAttribute("type", "file");
@@ -1069,7 +1129,7 @@
         if (existingIndex > -1) appState.notes[existingIndex] = notePayload;
         else appState.notes.unshift(notePayload);
 
-        localStorage.setItem('sleek_notes_pro_v14', JSON.stringify(appState.notes));
+        localStorage.setItem('sleek_notes_pro_v15', JSON.stringify(appState.notes));
         switchView('homeView'); initHome();
     }
 
@@ -1077,7 +1137,7 @@
         event.stopPropagation(); 
         if(confirm("Discard this note permanently?")) {
             appState.notes = appState.notes.filter(n => n.id !== id);
-            localStorage.setItem('sleek_notes_pro_v14', JSON.stringify(appState.notes));
+            localStorage.setItem('sleek_notes_pro_v15', JSON.stringify(appState.notes));
             initHome();
         }
     }
