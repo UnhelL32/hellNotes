@@ -560,8 +560,8 @@
         <div class="cloud-toolbar">
             <span class="cloud-label">📂 Google Drive Cloud Integration:</span>
             <div class="cloud-btn-group">
-                <button class="btn btn-secondary btn-small" onclick="autoUploadAllNotesToDrive()" style="border-color: var(--accent); color: var(--accent); font-weight: bold;">☁️ Direct Auto-Upload to My Drive</button>
-                <button class="btn btn-secondary btn-small" onclick="triggerLocalJSONRestore()">📤 Restore Backup File</button>
+                <button class="btn btn-secondary btn-small" onclick="autoUploadAllNotesToDrive()" style="border-color: var(--accent); color: var(--accent); font-weight: bold;">☁️ Direct Auto-Upload to Drive</button>
+                <button class="btn btn-secondary btn-small" onclick="directRestoreFromDriveOrLocal()">📂 Direct Restore from Drive / Local</button>
             </div>
         </div>
 
@@ -648,7 +648,7 @@
 
 <script>
     let appState = {
-        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v12')) || [],
+        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v13')) || [],
         currentNoteId: null,
         lastInteractionDate: null
     };
@@ -722,21 +722,18 @@
         }
     }
 
-    /* DIRECT AUTO-UPLOAD PIPELINE WITHOUT OAUTH SETUP */
+    /* DIRECT AUTO-UPLOAD TO GOOGLE DRIVE PIPELINE */
     function autoUploadAllNotesToDrive() {
         if (appState.notes.length === 0) {
-            alert("⚠️ Your dataset is empty. Write a note before pushing files into your cloud Drive backup.");
+            alert("⚠️ Your note dataset is empty. Write a note first before running file backups.");
             return;
         }
 
-        // 1. Generate the clean binary string backup array content
         const backupBlob = new Blob([JSON.stringify(appState.notes, null, 2)], { type: 'application/json' });
         const backupFileName = `Notebook_Cloud_Backup_${new Date().toISOString().slice(0,10)}.json`;
 
-        // 2. Alert user and directly route the backup file straight through to Google Drive web intake channel
-        alert(`☁️ Processing note backups!\n\nYour data will be packed up and your Google Drive will open directly.\n\nSimply tap "Upload" on your Drive workspace screen to store it.`);
+        alert(`☁️ Processing note backups!\n\nYour backup file will download, and your Google Drive workspace will open right up.\n\nSimply select "Upload" inside Drive to save it.`);
 
-        // 3. Programmatically force the browser to export the data stream directly while handing control over to Drive
         const downloadAnchor = document.createElement('a');
         downloadAnchor.href = URL.createObjectURL(backupBlob);
         downloadAnchor.download = backupFileName;
@@ -744,13 +741,13 @@
         downloadAnchor.click();
         downloadAnchor.remove();
 
-        // 4. Open Google Drive upload context directly
         setTimeout(() => {
             window.open('https://drive.google.com/drive/my-drive', '_blank');
         }, 1000);
     }
 
-    function triggerLocalJSONRestore() {
+    /* Patched Direct Drive / System Local File Manager Integration Loader */
+    function directRestoreFromDriveOrLocal() {
         const fileSelector = document.createElement('input');
         fileSelector.setAttribute("type", "file");
         fileSelector.setAttribute("accept", ".json");
@@ -764,14 +761,14 @@
                 try {
                     const importedData = JSON.parse(readerEvent.target.result);
                     if (Array.isArray(importedData)) {
-                        if (confirm("⚠️ Overwrite current local notebook data with this restored file?")) {
+                        if (confirm("⚠️ Warning: Restoring this file will overwrite your local device workspace notes. Proceed?")) {
                             appState.notes = importedData;
-                            localStorage.setItem('sleek_notes_pro_v12', JSON.stringify(appState.notes));
+                            localStorage.setItem('sleek_notes_pro_v13', JSON.stringify(appState.notes));
                             initHome();
-                            alert("✨ Success! Local workspace restored perfectly.");
+                            alert("🚀 Success! Notebook state populated and restored perfectly.");
                         }
-                    } else { alert("❌ Format error: Selected file is invalid."); }
-                } catch(err) { alert("❌ Error parsing the notebook data."); }
+                    } else { alert("❌ Format error: Selected file backup structure is invalid."); }
+                } catch(err) { alert("❌ Failed to parse data contents."); }
             }
         };
         fileSelector.click();
@@ -868,7 +865,7 @@
         document.getElementById('printModalContent').innerHTML = content;
         document.getElementById('printPreviewModal').classList.add('active');
 
-        try { window.print(); } catch (e) { console.log("Blocked by mobile wrapper environment."); }
+        try { window.print(); } catch (e) { console.log("Blocked by mobile wrapper container."); }
     }
 
     function closePrintPreview() { document.getElementById('printPreviewModal').classList.remove('active'); }
@@ -882,7 +879,7 @@
 
     function fallbackCopyToClipboard(text, targetService) {
         navigator.clipboard.writeText(text).then(() => {
-            alert(`📋 Protocol redirection locked.\n\nNote data copied instead! Go ahead and paste into ${targetService}.`);
+            alert(`📋 Protocol redirection locked by browser container.\n\nNote copied instead! Go ahead and paste into ${targetService}.`);
         }).catch(() => {
             const textArea = document.createElement("textarea");
             textArea.value = text; document.body.appendChild(textArea);
@@ -967,7 +964,7 @@
         if (existingIndex > -1) appState.notes[existingIndex] = notePayload;
         else appState.notes.unshift(notePayload);
 
-        localStorage.setItem('sleek_notes_pro_v12', JSON.stringify(appState.notes));
+        localStorage.setItem('sleek_notes_pro_v13', JSON.stringify(appState.notes));
         switchView('homeView'); initHome();
     }
 
@@ -975,7 +972,7 @@
         event.stopPropagation(); 
         if(confirm("Discard this note permanently?")) {
             appState.notes = appState.notes.filter(n => n.id !== id);
-            localStorage.setItem('sleek_notes_pro_v12', JSON.stringify(appState.notes));
+            localStorage.setItem('sleek_notes_pro_v13', JSON.stringify(appState.notes));
             initHome();
         }
     }
