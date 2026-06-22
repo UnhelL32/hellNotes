@@ -216,6 +216,37 @@
             color: #ef4444;
         }
 
+        /* Sleek Homepage Creator Footer Layout Box */
+        .creator-info-footer {
+            margin-top: auto;
+            padding: 1.25rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed var(--border-color);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        .creator-footer-row {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 0.4rem;
+        }
+        .creator-highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .creator-notice {
+            font-style: italic;
+            text-align: center;
+            border-top: 1px solid rgba(51, 65, 85, 0.4);
+            padding-top: 0.4rem;
+            margin-top: 0.4rem;
+            color: #34d399;
+        }
+
         /* Note Editor View Styles */
         #editorView {
             background-color: var(--note-paper-color);
@@ -566,6 +597,19 @@
         </div>
 
         <div id="notesContainer"></div>
+
+        <div class="creator-info-footer">
+            <div class="creator-footer-row">
+                <div>👨‍💻 Creator: <span class="creator-highlight">Jion</span></div>
+                <div>📧 Contact: <span class="creator-highlight">jioniut@gmail.com</span></div>
+            </div>
+            <div class="creator-footer-row">
+                <div>💸 bKash No: <span class="creator-highlight">01717082678</span> (Personal)</div>
+            </div>
+            <div class="creator-notice">
+                "The app is free, you can use it, no ads and no demand"
+            </div>
+        </div>
     </div>
 
     <div id="editorView" class="view">
@@ -648,7 +692,7 @@
 
 <script>
     let appState = {
-        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v13')) || [],
+        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v14')) || [],
         currentNoteId: null,
         lastInteractionDate: null
     };
@@ -746,7 +790,7 @@
         }, 1000);
     }
 
-    /* Patched Direct Drive / System Local File Manager Integration Loader */
+    /* Direct Drive / System Local File Manager Integration Loader */
     function directRestoreFromDriveOrLocal() {
         const fileSelector = document.createElement('input');
         fileSelector.setAttribute("type", "file");
@@ -763,7 +807,7 @@
                     if (Array.isArray(importedData)) {
                         if (confirm("⚠️ Warning: Restoring this file will overwrite your local device workspace notes. Proceed?")) {
                             appState.notes = importedData;
-                            localStorage.setItem('sleek_notes_pro_v13', JSON.stringify(appState.notes));
+                            localStorage.setItem('sleek_notes_pro_v14', JSON.stringify(appState.notes));
                             initHome();
                             alert("🚀 Success! Notebook state populated and restored perfectly.");
                         }
@@ -938,6 +982,7 @@
         attachments.forEach(att => appendAttachmentBadge(att));
     }
 
+    // Master Save Commit Function
     function saveAndGoHome() {
         const title = document.getElementById('noteTitle').value.trim();
         const content = document.getElementById('noteContent').innerHTML;
@@ -964,7 +1009,7 @@
         if (existingIndex > -1) appState.notes[existingIndex] = notePayload;
         else appState.notes.unshift(notePayload);
 
-        localStorage.setItem('sleek_notes_pro_v13', JSON.stringify(appState.notes));
+        localStorage.setItem('sleek_notes_pro_v14', JSON.stringify(appState.notes));
         switchView('homeView'); initHome();
     }
 
@@ -972,7 +1017,7 @@
         event.stopPropagation(); 
         if(confirm("Discard this note permanently?")) {
             appState.notes = appState.notes.filter(n => n.id !== id);
-            localStorage.setItem('sleek_notes_pro_v13', JSON.stringify(appState.notes));
+            localStorage.setItem('sleek_notes_pro_v14', JSON.stringify(appState.notes));
             initHome();
         }
     }
@@ -986,3 +1031,4 @@
 </script>
 </body>
 </html>
+    
