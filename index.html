@@ -3,1150 +3,1002 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimalist Note Suite Ultimate</title>
+    <title>Focus.note</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-primary: #0f172a;
-            --bg-secondary: #1e293b;
-            --accent: #38bdf8;
-            --accent-hover: #0ea5e9;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --border-color: #334155;
-            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-            
-            /* Dynamic Note Customization Variables */
-            --note-paper-color: #1e293b;
-            --note-font-color: #f8fafc;
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f8fafc; 
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        .cursive-font {
+            font-family: 'Caveat', cursive;
         }
-
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 2rem 1rem;
-            display: flex;
-            justify-content: center;
-            position: relative;
+        /* Masonry column layout for Google Keep aesthetic */
+        .masonry-grid { 
+            column-count: 1;
+            column-gap: 1.25rem;
         }
-
-        .container {
-            width: 100%;
-            max-width: 850px;
-            background: var(--bg-secondary);
-            border-radius: 16px;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            min-height: 85vh;
-            position: relative;
+        @media (min-width: 640px) {
+            .masonry-grid { column-count: 2; }
         }
-
-        .view {
-            display: none;
-            flex-direction: column;
-            flex: 1;
-            padding: 2rem;
+        @media (min-width: 1024px) {
+            .masonry-grid { column-count: 3; }
         }
-
-        .view.active {
-            display: flex;
+        .masonry-item { 
+            break-inside: avoid; 
+            margin-bottom: 1.25rem; 
         }
-
-        /* Home View Styles */
-        .home-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 1rem;
+        .toolbar-icon { 
+            @apply p-2.5 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition duration-150 ease-in-out cursor-pointer flex items-center justify-center relative; 
         }
-
-        .cloud-toolbar {
-            display: flex;
-            gap: 0.5rem;
-            background: rgba(15, 23, 42, 0.4);
-            padding: 0.6rem 1rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            margin-bottom: 1.5rem;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
+        .toolbar-icon svg {
+            @apply w-5 h-5;
         }
-
-        .cloud-btn-group {
-            display: flex;
-            gap: 0.5rem;
+        /* Custom scrollbar for note editor */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
         }
-
-        .cloud-label {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-        }
-
-        .btn {
-            background-color: var(--accent);
-            color: #0f172a;
-            font-weight: 600;
-            border: none;
-            padding: 0.625rem 1.25rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn:hover {
-            background-color: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--text-muted);
-            border: 1px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background-color: #273549;
-            color: var(--text-main);
-        }
-
-        .btn-small {
-            padding: 0.45rem 0.85rem;
-            font-size: 0.8rem;
-            border-radius: 6px;
-        }
-
-        .tag-section {
-            margin-bottom: 2rem;
-        }
-
-        .tag-title {
-            color: var(--accent);
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .notes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 1rem;
-        }
-
-        .note-card {
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid var(--border-color);
-            padding: 1.25rem;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .note-card:hover {
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        .note-card-title {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .note-card-snippet {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            line-height: 1.5;
-        }
-
-        .delete-card-btn {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
+        .custom-scroll::-webkit-scrollbar-track {
             background: transparent;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 0.25rem;
-            border-radius: 4px;
-            opacity: 0;
-            transition: opacity 0.2s;
         }
-
-        .note-card:hover .delete-card-btn {
-            opacity: 1;
-        }
-
-        .delete-card-btn:hover {
-            color: #ef4444;
-        }
-
-        /* Homepage Creator Footer Layout Box */
-        .creator-info-footer {
-            margin-top: auto;
-            padding: 1.25rem;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px dashed var(--border-color);
-            border-radius: 12px;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            line-height: 1.6;
-        }
-        .creator-footer-row {
-            display: flex;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-bottom: 0.4rem;
-        }
-        .creator-highlight {
-            color: var(--accent);
-            font-weight: 600;
-        }
-        .creator-notice {
-            font-style: italic;
-            text-align: center;
-            border-top: 1px solid rgba(51, 65, 85, 0.4);
-            padding-top: 0.4rem;
-            margin-top: 0.4rem;
-            color: #34d399;
-        }
-
-        /* Note Editor View Styles */
-        #editorView {
-            background-color: var(--note-paper-color);
-            transition: background-color 0.3s ease;
-        }
-
-        .editor-top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .date-display {
-            text-align: right;
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-
-        .title-wrapper {
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-
-        .note-title-input {
-            background: transparent;
-            border: none;
-            color: var(--note-font-color);
-            font-size: 1.75rem;
-            font-weight: bold;
-            text-decoration: underline;
-            text-align: center;
-            width: 80%;
-            outline: none;
-            padding: 0.25rem;
-            transition: color 0.3s ease;
-        }
-
-        /* Rich ContentEditable Workspace */
-        .editor-content-area {
-            flex: 1;
-            background: transparent;
-            border: none;
-            color: var(--note-font-color);
-            font-size: 1.1rem;
-            line-height: 1.6;
-            outline: none;
-            width: 100%;
-            min-height: 320px;
-            margin-bottom: 1.5rem;
-            transition: color 0.3s ease;
-            overflow-y: auto;
-        }
-
-        .editor-content-area[placeholder]:empty:before {
-            content: attr(placeholder);
-            color: var(--text-muted);
-            font-style: italic;
-            cursor: text;
-        }
-
-        /* Injected Timeline Separators */
-        .timeline-separator {
-            color: var(--accent);
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin: 1.5rem 0;
-            text-align: center;
-            border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 0.5rem;
-            display: block;
-        }
-
-        /* Tables Formatting */
-        .note-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-            color: var(--note-font-color);
-            border: 1px solid var(--border-color);
-        }
-
-        .note-table th, .note-table td {
-            border: 1px solid var(--border-color);
-            padding: 0.5rem 0.75rem;
-            text-align: left;
-            min-width: 60px;
-        }
-
-        .note-table th {
-            background-color: rgba(255, 255, 255, 0.1);
-            font-weight: bold;
-        }
-
-        /* Ultra-Minimalist Single Line Footer */
-        .editor-footer {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid var(--border-color);
-            margin-top: auto;
-            flex-wrap: wrap;
-        }
-
-        .single-line-toolbar {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            background: rgba(15, 23, 42, 0.3);
-            padding: 0.35rem;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            flex-wrap: wrap;
-        }
-
-        .icon-btn {
-            background: transparent;
-            border: 1px solid transparent;
-            color: var(--text-main);
-            width: 38px;
-            height: 38px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.15rem;
-            transition: all 0.2s ease;
-        }
-
-        .icon-btn:hover {
-            background: rgba(51, 65, 85, 0.5);
-            border-color: var(--border-color);
-            transform: translateY(-1px);
-        }
-
-        /* Specific contextual actions subtle indicators */
-        .icon-btn.btn-wa:hover { background: rgba(34, 197, 94, 0.15); border-color: #22c55e; }
-        .icon-btn.btn-mail:hover { background: rgba(244, 63, 94, 0.15); border-color: #f43f5e; }
-        .icon-btn.btn-accent:hover { background: rgba(56, 189, 248, 0.15); border-color: var(--accent); }
-
-        .vertical-divider {
-            width: 1px;
-            height: 24px;
-            background-color: var(--border-color);
-            margin: 0 0.2rem;
-        }
-
-        /* Embedded Compact Color Circle Selectors */
-        .inline-color-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0 0.5rem;
-        }
-
-        .color-circle-input {
-            -webkit-appearance: none;
-            border: none;
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            cursor: pointer;
-            background: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .color-circle-input::-webkit-color-swatch {
-            border: 2px solid var(--border-color);
-            border-radius: 50%;
-            padding: 0;
-        }
-
-        .attachments-display {
-            margin-bottom: 0.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .attachment-badge {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-        }
-
-        /* Compact Popover Calculator */
-        .calc-widget {
-            position: fixed;
-            bottom: 5rem;
-            right: 2rem;
-            width: 260px;
-            background: #1e293b;
-            border: 2px solid var(--border-color);
-            border-radius: 14px;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
-            z-index: 100;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .calc-widget.active {
-            display: flex;
-        }
-
-        .calc-header {
-            background: #0f172a;
-            padding: 0.5rem 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: var(--accent);
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .calc-close { cursor: pointer; color: var(--text-muted); }
-        .calc-close:hover { color: #ef4444; }
-
-        .calc-screen {
-            background: #0f172a;
-            color: #38bdf8;
-            padding: 1rem;
-            text-align: right;
-            font-size: 1.5rem;
-            font-family: monospace;
-            border-bottom: 1px solid var(--border-color);
-            min-height: 58px;
-        }
-
-        .calc-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2px;
-            background: var(--border-color);
-            padding: 2px;
-        }
-
-        .calc-grid button {
-            background: #1e293b;
-            border: none;
-            color: var(--text-main);
-            padding: 0.85rem;
-            font-size: 1.1rem;
-            cursor: pointer;
-        }
-
-        .calc-grid button:hover { background: #334155; }
-        .calc-grid button.op-btn { color: var(--accent); background: #131c2e; }
-
-        /* Full-screen Fallback Print Preview Modal Overlay */
-        .print-preview-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: #ffffff;
-            color: #000000;
-            z-index: 10000;
-            display: none;
-            flex-direction: column;
-            padding: 3rem 2rem;
-            overflow-y: auto;
-        }
-        .print-preview-modal.active {
-            display: flex;
-        }
-        .print-preview-close-btn {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-        .print-preview-title {
-            text-align: center;
-            font-size: 2rem;
-            font-weight: bold;
-            text-decoration: underline;
-            margin-bottom: 1.5rem;
-            color: #000000 !important;
-        }
-        .print-preview-body {
-            font-size: 1.15rem;
-            line-height: 1.6;
-            color: #000000 !important;
-        }
-        .print-preview-body .note-table {
-            color: #000000 !important;
-            border-color: #000000 !important;
-        }
-        .print-preview-body .note-table th, .print-preview-body .note-table td {
-            border-color: #000000 !important;
-        }
-        .print-preview-body .timeline-separator {
-            color: #475569 !important;
-            border-bottom-color: #475569 !important;
-        }
-
-        /* Dynamic Visual Voice Recording Overlay HUD */
-        .audio-recording-hud {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #0f172a;
-            border: 2px solid var(--accent);
-            padding: 2rem;
-            border-radius: 16px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7);
-            z-index: 20000;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.25rem;
-            width: 280px;
-        }
-        .audio-recording-hud.active {
-            display: flex;
-        }
-        .recording-pulse-node {
-            width: 64px;
-            height: 64px;
-            background: #ef4444;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-            animation: recordGlowPulse 1.5s infinite ease-in-out;
-        }
-        .recording-timer-txt {
-            font-family: monospace;
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: var(--text-main);
-        }
-        .recording-stop-btn {
-            background: #ef4444;
-            color: white;
-            border: none;
-            padding: 0.6rem 1.5rem;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .recording-stop-btn:hover {
-            background: #dc2626;
-        }
-        @keyframes recordGlowPulse {
-            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
-            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
-        }
-
-        @media print {
-            body { background: white !important; color: black !important; padding: 0; }
-            .container, .print-preview-close-btn, .audio-recording-hud { display: none !important; }
-            .print-preview-modal { display: flex !important; position: static !important; width: 100% !important; height: auto !important; padding: 0 !important; }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.3);
+            border-radius: 20px;
         }
     </style>
 </head>
-<body>
+<body class="min-h-screen text-slate-800 flex flex-col selection:bg-blue-100">
 
-<div class="container">
-    <div id="homeView" class="view active">
-        <div class="home-header">
-            <h1>Personal Notebook</h1>
-            <button class="btn" onclick="openNewNoteView()">📝 Write New Note</button>
-        </div>
+    <!-- Toast Notifications container -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
 
-        <div class="cloud-toolbar">
-            <span class="cloud-label">📂 Google Drive Cloud Integration:</span>
-            <div class="cloud-btn-group">
-                <button class="btn btn-secondary btn-small" onclick="autoUploadAllNotesToDrive()" style="border-color: var(--accent); color: var(--accent); font-weight: bold;">☁️ Direct Auto-Upload to Drive</button>
-                <button class="btn btn-secondary btn-small" onclick="directRestoreFromDriveOrLocal()">📂 Direct Restore from Drive / Local</button>
+    <header class="border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="p-2 bg-slate-900 text-white rounded-lg font-bold text-sm leading-none">Fn</span>
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Focus.note</h1>
+                </div>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mt-1">Created by Minhaj, IUT-10</p>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <button onclick="openNewEditor()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl shadow-sm transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    New Note
+                </button>
+                <button onclick="showView('dashboard')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition">
+                    Dashboard
+                </button>
             </div>
         </div>
+    </header>
 
-        <div id="notesContainer"></div>
+    <main id="app" class="max-w-6xl w-full mx-auto px-4 py-8 flex-grow">
+        
+        <!-- ================= EDITOR VIEW ================= -->
+        <section id="editorView" class="hidden relative max-w-3xl mx-auto bg-white p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-100 transition-all">
+            
+            <!-- FLOATING VERTICAL TOOLBAR -->
+            <div class="absolute -right-2 sm:-right-16 top-0 flex flex-col gap-1.5 bg-white p-1.5 rounded-2xl shadow-lg border border-slate-100 z-20">
+                <!-- AI Magic Companion -->
+                <button type="button" id="ai-btn" class="toolbar-icon text-purple-600 hover:text-purple-900 hover:bg-purple-50" title="✨ AI Magic Companion" onclick="toggleAIPanel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 21l-.813-5.096L3 15l5.096-.813L9 9l.813 5.187L15 15l-5.187.813zM18 10.5l-.5 3-.5-3-3-.5 3-.5.5-3 .5 3 3 .5-3 .5zM14 3.5l-.25 1.5-.25-1.5-1.5-.25 1.5-.25.25-1.5.25 1.5 1.5.25-1.5.25z" /></svg>
+                </button>
 
-        <div class="creator-info-footer">
-            <div class="creator-footer-row">
-                <div>👨‍💻 Creator: <span class="creator-highlight">Jion</span></div>
-                <div>📧 Contact: <span class="creator-highlight">jioniut@gmail.com</span></div>
+                <hr class="border-slate-100 my-0.5">
+
+                <!-- Bold -->
+                <button type="button" class="toolbar-icon" title="Bold" onmousedown="executeFormat(event, 'bold')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3.75h4.125a3.375 3.375 0 0 1 2.25 5.906 3.375 3.375 0 0 1 2.25 5.906H6.75V3.75Zm0 11.25h5.25a1.5 1.5 0 0 0 0-3H6.75v3Zm0-4.5h4.5a1.5 1.5 0 0 0 0-3h-4.5v3Z" /></svg>
+                </button>
+                <!-- Italic -->
+                <button type="button" class="toolbar-icon" title="Italic" onmousedown="executeFormat(event, 'italic')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16 4h-5.5M14 4L9 20M9.5 20H4" /></svg>
+                </button>
+                <!-- Underline -->
+                <button type="button" class="toolbar-icon" title="Underline" onmousedown="executeFormat(event, 'underline')">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0 1 12 21.75c-3.314 0-6-2.686-6-6V3.75m11.982 14.975a7.488 7.488 0 0 0 2.018-4.975V3.75m-14 0h3m8 0h3m-11 15h11" /></svg>
+                </button>
+                <!-- Strikethrough -->
+                <button type="button" class="toolbar-icon" title="Strike Through" onmousedown="executeFormat(event, 'strikeThrough')">
+                    <span class="font-extrabold text-base leading-none">S̶</span>
+                </button>
+                <!-- Cursive Mode -->
+                <button type="button" class="toolbar-icon" title="Cursive Mode" onmousedown="toggleCursive(event)">
+                    <span class="font-bold cursive-font text-lg leading-none">C</span>
+                </button>
+                
+                <hr class="border-slate-100 my-1">
+                
+                <!-- Calculator Toggle -->
+                <button type="button" class="toolbar-icon" title="Calculator" onclick="toggleCalc()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-3-3V18m-3-3V18m3-6h.008v.008H12.75V12Zm3 0h.008v.008H15.75V12Zm-6 0h.008v.008H9.75V12Zm0-3h.008v.008H9.75V9Zm3 0h.008v.008H12.75V9Zm3 0h.008v.008H15.75V9Zm-9 12h10.5a2.25 2.25 0 0 0 2.25-2.25V5.25A2.25 2.25 0 0 0 15.75 3H4.5A2.25 2.25 0 0 0 2.25 5.25v13.5A2.25 2.25 0 0 0 4.5 21Z" /></svg>
+                </button>
+                <!-- Theme / Color Selector -->
+                <button type="button" id="theme-btn" class="toolbar-icon" title="Customize Colors" onclick="toggleThemePanel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 0 0-3.078 0L2.25 18.375v2.25h16.5v-2.25l-3.078-1.748a3 3 0 0 0-3.078 0l-.22.124a3 3 0 0 1-3.078 0l-.22-.124ZM12 15.75a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 6.415a2.23 2.23 0 0 0 4.5 0a2.23 2.23 0 0 0-4.5 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M4.017 10.309a4.5 4.5 0 0 0 0 3.382m15.966-3.382a4.5 4.5 0 0 1 0 3.382" /></svg>
+                </button>
+                <!-- Dynamic Table -->
+                <button type="button" class="toolbar-icon" title="Insert Dynamic Table" onclick="toggleTablePanel()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h12A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6ZM3.75 9h16.5m-16.5 6h16.5M12 3.75v16.5" /></svg>
+                </button>
+                <!-- Voice Recorder -->
+                <button id="voice-record-btn" type="button" class="toolbar-icon" title="Record Voice Note" onclick="toggleVoiceRecord()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg>
+                </button>
+                <!-- Image Attachment -->
+                <button type="button" class="toolbar-icon" title="Attach Image File" onclick="triggerImageUpload()">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
+                </button>
             </div>
-            <div class="creator-footer-row">
-                <div>💸 bKash No: <span class="creator-highlight">01717082678</span> (Personal)</div>
-            </div>
-            <div class="creator-notice">
-                "The app is free, you can use it, no ads and no demand"
-            </div>
-        </div>
-    </div>
 
-    <div id="editorView" class="view">
-        <div class="editor-top-bar">
-            <button class="btn btn-secondary" onclick="saveAndGoHome()">← Back</button>
-            <div class="date-display" id="currentDateDisplay"></div>
-        </div>
-
-        <div class="title-wrapper">
-            <input type="text" id="noteTitle" class="note-title-input" placeholder="Untitled Note">
-        </div>
-
-        <div id="noteContent" class="editor-content-area" contenteditable="true" placeholder="Start writing something... Add #tags to organize them automatically on your dashboard." onkeyup="handleContentTyping(event)"></div>
-
-        <div id="attachmentsContainer" class="attachments-display"></div>
-
-        <div class="editor-footer">
-            <div class="single-line-toolbar">
-                <button class="icon-btn" onclick="openRecordingHUD()" title="Voice Note">🎙️</button>
-                <button class="icon-btn" onclick="triggerImageAttachment()" title="Attach Image">🖼️</button>
-                <button class="icon-btn" onclick="triggerLinkAttachment()" title="Attach Link">🔗</button>
-                <button class="icon-btn btn-accent" onclick="insertTableWidget()" title="Add Table">📊</button>
+            <!-- THEME / COLOR POPUP -->
+            <div id="themePanel" class="hidden absolute top-20 right-20 bg-white p-5 rounded-2xl shadow-xl border border-slate-100 z-30 w-64">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Note Colors</span>
+                    <button class="text-gray-400 hover:text-gray-600 text-xs font-bold" onclick="toggleThemePanel()">✕</button>
+                </div>
+                <!-- Background Theme Choices -->
+                <p class="text-xs font-semibold text-slate-500 mb-2">Sheet Theme:</p>
+                <div class="grid grid-cols-5 gap-2 mb-4">
+                    <button class="w-8 h-8 rounded-full border border-slate-200 bg-white" onclick="changeNoteBg('#ffffff')" title="Pure White"></button>
+                    <button class="w-8 h-8 rounded-full border border-slate-200 bg-[#fdf6e2]" onclick="changeNoteBg('#fdf6e2')" title="Warm Sand"></button>
+                    <button class="w-8 h-8 rounded-full border border-slate-200 bg-[#fee2e2]" onclick="changeNoteBg('#fee2e2')" title="Coral Blush"></button>
+                    <button class="w-8 h-8 rounded-full border border-slate-200 bg-[#fef9c3]" onclick="changeNoteBg('#fef9c3')" title="Pastel Yellow"></button>
+                    <button class="w-8 h-8 rounded-full border border-slate-200 bg-[#ecfdf5]" onclick="changeNoteBg('#ecfdf5')" title="Mint Green"></button>
+                    <button class="w-8 h-8 rounded-full border border-slate-200 bg-[#e0f2fe]" onclick="changeNoteBg('#e0f2fe')" title="Sky Blue"></button>
+                    <button class="w-8 h-8 rounded-full border border-slate-200 bg-[#fae8ff]" onclick="changeNoteBg('#fae8ff')" title="Lilac Lavender"></button>
+                    <button class="w-8 h-8 rounded-full border border-slate-200 bg-[#f3f4f6]" onclick="changeNoteBg('#f3f4f6')" title="Minimal Gray"></button>
+                    <button class="w-8 h-8 rounded-full border border-slate-700 bg-slate-900 text-white" onclick="changeNoteBg('#0f172a')" title="Midnight Black"></button>
+                </div>
                 
-                <div class="vertical-divider"></div>
-                
-                <button class="icon-btn" onclick="printActiveNote()" title="Print Note">🖨️</button>
-                <button class="icon-btn" onclick="toggleCalculator()" title="Calculator">🧮</button>
-                
-                <div class="vertical-divider"></div>
-                
-                <button class="icon-btn btn-mail" onclick="shareViaEmail()" title="Share via Email">✉️</button>
-                <button class="icon-btn btn-wa" onclick="shareViaWhatsApp()" title="Share via WhatsApp">💬</button>
-                
-                <div class="vertical-divider"></div>
-                
-                <div class="inline-color-wrapper">
-                    <input type="color" id="paperColorPicker" class="color-circle-input" value="#1e293b" oninput="applyWorkspaceColors()" title="Page Background Color">
-                    <input type="color" id="fontColorPicker" class="color-circle-input" value="#f8fafc" oninput="applyWorkspaceColors()" title="Text Font Color">
+                <!-- Text / Pen Choices -->
+                <p class="text-xs font-semibold text-slate-500 mb-2">Pen (Text) Color:</p>
+                <div class="grid grid-cols-5 gap-2">
+                    <button class="w-7 h-7 rounded-full bg-slate-900 border" onclick="changePenColor('#0f172a')"></button>
+                    <button class="w-7 h-7 rounded-full bg-blue-600 border" onclick="changePenColor('#2563eb')"></button>
+                    <button class="w-7 h-7 rounded-full bg-red-600 border" onclick="changePenColor('#dc2626')"></button>
+                    <button class="w-7 h-7 rounded-full bg-green-600 border" onclick="changePenColor('#16a34a')"></button>
+                    <button class="w-7 h-7 rounded-full bg-purple-600 border" onclick="changePenColor('#9333ea')"></button>
                 </div>
             </div>
 
-            <button class="btn" onclick="saveAndGoHome()">Save & Close</button>
+            <!-- TABLE CONSTRUCTOR POPUP -->
+            <div id="tablePanel" class="hidden absolute top-32 right-20 bg-white p-5 rounded-2xl shadow-xl border border-slate-100 z-30 w-64">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Construct Table</span>
+                    <button class="text-gray-400 hover:text-gray-600 text-xs font-bold" onclick="toggleTablePanel()">✕</button>
+                </div>
+                <div class="flex flex-col gap-3">
+                    <div>
+                        <label class="text-xs text-slate-500 block mb-1">Rows</label>
+                        <input id="tblRows" type="number" min="1" max="10" value="3" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-900">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500 block mb-1">Columns</label>
+                        <input id="tblCols" type="number" min="1" max="10" value="3" class="w-full p-2 border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-slate-900">
+                    </div>
+                    <button onclick="insertGridTable()" class="w-full mt-1 py-2 bg-slate-900 text-white rounded-xl font-semibold text-xs hover:bg-slate-800 transition">Insert Table</button>
+                </div>
+            </div>
+
+            <!-- FLOATING CALCULATOR POPUP -->
+            <div id="floatCalc" class="hidden absolute top-20 right-20 bg-white p-5 rounded-2xl shadow-xl border border-slate-100 z-30 w-64">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Built-in Calc</span>
+                    <button class="text-gray-400 hover:text-gray-600 text-xs font-bold" onclick="toggleCalc()">✕</button>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <input type="text" id="calcInput" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-200 text-right font-mono" placeholder="e.g. 12 + 4 * 5" onkeydown="handleCalcEnter(event)">
+                    <div id="calcLiveOutput" class="text-right text-xs text-slate-400 font-mono mb-1 min-h-[1rem] pr-1"></div>
+                    <div class="grid grid-cols-4 gap-1.5 text-xs font-mono">
+                        <button onclick="calcAppend('7')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">7</button>
+                        <button onclick="calcAppend('8')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">8</button>
+                        <button onclick="calcAppend('9')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">9</button>
+                        <button onclick="calcAppend('/')" class="p-2 bg-slate-100 hover:bg-slate-200 font-semibold rounded-lg">/</button>
+                        
+                        <button onclick="calcAppend('4')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">4</button>
+                        <button onclick="calcAppend('5')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">5</button>
+                        <button onclick="calcAppend('6')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">6</button>
+                        <button onclick="calcAppend('*')" class="p-2 bg-slate-100 hover:bg-slate-200 font-semibold rounded-lg">*</button>
+                        
+                        <button onclick="calcAppend('1')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">1</button>
+                        <button onclick="calcAppend('2')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">2</button>
+                        <button onclick="calcAppend('3')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">3</button>
+                        <button onclick="calcAppend('-')" class="p-2 bg-slate-100 hover:bg-slate-200 font-semibold rounded-lg">-</button>
+                        
+                        <button onclick="calcAppend('0')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">0</button>
+                        <button onclick="calcAppend('.')" class="p-2 bg-slate-50 hover:bg-slate-100 rounded-lg">.</button>
+                        <button onclick="calcBackspace()" class="p-2 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg">⌫</button>
+                        <button onclick="calcAppend('+')" class="p-2 bg-slate-100 hover:bg-slate-200 font-semibold rounded-lg">+</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5 mt-1">
+                        <button onclick="calcClear()" class="py-1.5 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-semibold rounded-lg">Clear</button>
+                        <button onclick="runCalc()" class="py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg">Insert Sol</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✨ AI COMPANION PANEL -->
+            <div id="aiPanel" class="hidden absolute top-12 right-20 bg-white p-5 rounded-2xl shadow-xl border border-slate-100 z-30 w-72 transition-all">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs font-bold text-purple-600 uppercase tracking-widest flex items-center gap-1">
+                        ✨ AI Assistant
+                    </span>
+                    <button class="text-gray-400 hover:text-gray-600 text-xs font-bold" onclick="toggleAIPanel()">✕</button>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <p class="text-[10px] text-slate-400 mb-1 leading-relaxed">Let Gemini help draft, structure, summarize, or translate your notes.</p>
+                    
+                    <button onclick="runAIOperation('summarize')" class="w-full text-left py-2 px-3 hover:bg-purple-50 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-2 border border-slate-100 transition">
+                        📝 ✨ Summarize Note
+                    </button>
+                    <button onclick="runAIOperation('continue')" class="w-full text-left py-2 px-3 hover:bg-purple-50 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-2 border border-slate-100 transition">
+                        ✍️ ✨ Continue Writing
+                    </button>
+                    <button onclick="runAIOperation('tasks')" class="w-full text-left py-2 px-3 hover:bg-purple-50 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-2 border border-slate-100 transition">
+                        ✅ ✨ Extract Action Checklist
+                    </button>
+                    <button onclick="runAIOperation('improve')" class="w-full text-left py-2 px-3 hover:bg-purple-50 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-2 border border-slate-100 transition">
+                        💅 ✨ Polish & Improve
+                    </button>
+                    
+                    <div class="border-t border-slate-100 my-2 pt-2">
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Custom Magic Prompt</label>
+                        <textarea id="aiCustomPrompt" rows="2" class="w-full p-2 text-xs border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-200 resize-none font-sans" placeholder="E.g., Translate to French, explain formula, or turn into an email..."></textarea>
+                        <button onclick="runAIOperation('custom')" class="w-full mt-1.5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
+                            ✨ Ask AI
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOTE CONTENT WORKSPACE -->
+            <div id="noteSheet" class="relative p-6 rounded-2xl border border-slate-100 transition-colors duration-200 bg-white shadow-inner">
+                
+                <!-- ✨ AI Loading Overlay -->
+                <div id="aiLoader" class="hidden absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-2xl z-40">
+                    <div class="relative w-12 h-12">
+                        <div class="absolute inset-0 rounded-full border-4 border-purple-500 border-t-transparent animate-spin"></div>
+                    </div>
+                    <p class="text-sm font-bold text-purple-700 mt-4">AI is channeling inspiration...</p>
+                    <p class="text-[10px] text-slate-400 mt-1">Calling Gemini to polish your ideas</p>
+                </div>
+
+                <!-- ✨ AI Response Drawer/View Area -->
+                <div id="aiResultOverlay" class="hidden absolute inset-6 bg-white rounded-2xl border border-purple-100 shadow-2xl p-5 z-40 flex flex-col">
+                    <div class="flex justify-between items-center mb-3 border-b border-slate-100 pb-2">
+                        <span class="text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-lg font-bold flex items-center gap-1">
+                            ✨ AI Response Output
+                        </span>
+                        <button onclick="closeAIResult()" class="text-slate-400 hover:text-slate-600 text-xs font-bold">✕ Close</button>
+                    </div>
+                    <!-- AI Preview Box -->
+                    <div id="aiResultContent" class="flex-grow overflow-y-auto text-sm text-slate-700 leading-relaxed custom-scroll whitespace-pre-wrap select-text p-3 bg-slate-50 border border-purple-50/50 rounded-xl mb-3 font-sans" contenteditable="true"></div>
+                    
+                    <div class="flex flex-wrap justify-end gap-2 pt-1">
+                        <button onclick="insertAIResult('cursor')" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-bold rounded-xl transition">✨ Insert at Cursor</button>
+                        <button onclick="insertAIResult('append')" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-sm transition">✨ Append to End</button>
+                        <button onclick="insertAIResult('replace')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">✨ Replace Note</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center gap-4 mb-6">
+                    <input type="text" id="noteTitle" placeholder="Title your note..." class="text-2xl font-bold outline-none w-full bg-transparent border-b border-transparent focus:border-slate-200 pb-1 transition duration-150">
+                    <div class="flex flex-col items-end">
+                        <input type="date" id="noteDate" class="text-xs text-slate-500 font-semibold bg-transparent outline-none cursor-pointer border border-slate-200 rounded-lg p-1.5 hover:bg-slate-50 transition">
+                    </div>
+                </div>
+                
+                <!-- CONTENTEDITABLE AREA -->
+                <div id="noteContent" contenteditable="true" class="w-full min-h-[350px] max-h-[500px] text-slate-800 outline-none p-2 overflow-y-auto custom-scroll prose max-w-none text-base leading-relaxed" placeholder="Write something incredible... use #hashtags to categorize them automatically."></div>
+            </div>
+            
+            <div class="flex justify-between items-center mt-6">
+                <button onclick="confirmDeleteCurrent()" id="deleteBtn" class="text-red-500 hover:text-red-700 text-xs font-semibold tracking-wide flex items-center gap-1.5 transition hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                    Delete Note
+                </button>
+                <div class="flex gap-3 ml-auto">
+                    <button onclick="showView('dashboard')" class="text-slate-400 hover:text-slate-600 font-semibold px-4 py-2 text-sm rounded-xl transition">Cancel</button>
+                    <button onclick="saveNote()" class="bg-slate-900 text-white px-6 py-2 rounded-xl text-sm font-semibold hover:bg-slate-800 transition shadow-sm">Save Note</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= DASHBOARD VIEW ================= -->
+        <section id="dashboardView" class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            
+            <!-- Notes Section -->
+            <div class="md:col-span-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Active Notes</h2>
+                    
+                    <!-- Clean minimal search -->
+                    <div class="relative max-w-sm w-full">
+                        <span class="absolute inset-y-0 left-3 flex items-center text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+                        </span>
+                        <input type="text" id="searchInput" oninput="searchNotes()" placeholder="Search notes..." class="w-full pl-9 pr-4 py-1.5 text-xs border border-slate-200 bg-white rounded-xl outline-none focus:ring-2 focus:ring-slate-100 transition">
+                    </div>
+                </div>
+                
+                <div id="notesContainer" class="masonry-grid">
+                    <!-- Dynamic Notes Loaded Here -->
+                </div>
+                
+                <!-- Zero state banner -->
+                <div id="noNotesMessage" class="hidden text-center py-16 bg-white border border-slate-100 rounded-3xl mt-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-10 h-10 text-slate-300 mx-auto mb-3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" /></svg>
+                    <p class="text-sm font-semibold text-slate-500">No notes found</p>
+                    <p class="text-xs text-slate-400 mt-1">Start your journey by making a new note now.</p>
+                </div>
+            </div>
+
+            <!-- Tags Sidebar Section -->
+            <div class="md:col-span-1 bg-white p-6 rounded-3xl border border-slate-100 h-fit shadow-sm sticky top-28">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581a1.44 1.44 0 0 0 2.037 0l4.318-4.317a1.44 1.44 0 0 0 0-2.037L11.16 3.66a2.25 2.25 0 0 0-1.591-.659Zm-3.568 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z" /></svg>
+                    Filter Tags
+                </h2>
+                <div id="tagsContainer" class="flex flex-wrap gap-2">
+                    <!-- Dynamic tag chips -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="mt-auto border-t border-slate-100 bg-white/50 text-slate-400 text-xs py-6">
+        <div class="max-w-6xl mx-auto px-4 flex justify-between items-center">
+            <p>&copy; 2026 Focus.note</p>
+            <p>Made by Minhaj &bull; IUT-10</p>
+        </div>
+    </footer>
+
+    <!-- Custom Delete Note Modal -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform scale-95 transition-all">
+            <h3 class="text-lg font-bold text-slate-900 mb-2">Delete Note</h3>
+            <p class="text-sm text-slate-500 mb-6">Are you sure you want to permanently delete this note? This action cannot be undone.</p>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 text-slate-400 hover:text-slate-600 text-sm font-semibold rounded-xl transition">Cancel</button>
+                <button onclick="deleteCurrentNote()" class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition">Delete Permanently</button>
+            </div>
         </div>
     </div>
-</div>
 
-<div id="calcWidget" class="calc-widget">
-    <div class="calc-header">
-        <span>Utility Calculator</span>
-        <span class="calc-close" onclick="toggleCalculator()">✕</span>
-    </div>
-    <div id="calcScreen" class="calc-screen">0</div>
-    <div class="calc-grid">
-        <button class="op-btn" onclick="clearCalc()">C</button>
-        <button class="op-btn" onclick="inputCalcOp('/')">/</button>
-        <button class="op-btn" onclick="inputCalcOp('*')">*</button>
-        <button class="op-btn" onclick="inputCalcOp('-')">-</button>
-        <button onclick="inputCalcNum('7')">7</button>
-        <button onclick="inputCalcNum('8')">8</button>
-        <button onclick="inputCalcNum('9')">9</button>
-        <button class="op-btn" onclick="inputCalcOp('+')">+</button>
-        <button onclick="inputCalcNum('4')">4</button>
-        <button onclick="inputCalcNum('5')">5</button>
-        <button onclick="inputCalcNum('6')">6</button>
-        <button class="op-btn" onclick="calculateResult()">=</button>
-        <button onclick="inputCalcNum('1')">1</button>
-        <button onclick="inputCalcNum('2')">2</button>
-        <button onclick="inputCalcNum('3')">3</button>
-        <button onclick="inputCalcNum('0')" style="grid-column: span 2;">0</button>
-        <button onclick="inputCalcNum('.')">.</button>
-    </div>
-</div>
+    <script>
+        // Data Store
+        let notes = JSON.parse(localStorage.getItem('focusNotes')) || [];
+        let editingId = null;
+        let activeTagFilter = null;
+        let searchQuery = "";
+        
+        // Editor color tracking
+        let currentNoteBg = "#ffffff";
+        let isCursiveActive = false;
 
-<div id="printPreviewModal" class="print-preview-modal">
-    <button class="print-preview-close-btn" onclick="closePrintPreview()">✕ Close Preview</button>
-    <div id="printModalDate" style="text-align: right; font-weight: 500; font-size: 0.95rem; margin-bottom: 0.5rem;"></div>
-    <div id="printModalTitle" class="print-preview-title"></div>
-    <div id="printModalContent" class="print-preview-body"></div>
-</div>
+        // Custom Notification Toast System
+        function showNotification(message, type = "info") {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-2 px-4 py-3 rounded-xl shadow-lg border border-slate-100 bg-white text-slate-800 text-xs font-semibold transform translate-y-2 opacity-0 transition duration-300`;
+            
+            let colorDot = 'bg-blue-500';
+            if (type === 'success') colorDot = 'bg-emerald-500';
+            if (type === 'error') colorDot = 'bg-rose-500';
 
-<div id="recordingHud" class="audio-recording-hud">
-    <div class="recording-pulse-node">🎙️</div>
-    <div style="font-weight: 600; font-size: 1rem; color: #ef4444;">Recording Active...</div>
-    <div id="recordingTimer" class="recording-timer-txt">00:00</div>
-    <button class="recording-stop-btn" onclick="stopAudioRecordingStream()">Stop & Save</button>
-</div>
+            toast.innerHTML = `
+                <span class="w-2.5 h-2.5 rounded-full ${colorDot} animate-ping"></span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            
+            // Trigger animation
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
 
-<script>
-    let appState = {
-        notes: JSON.parse(localStorage.getItem('sleek_notes_pro_v15')) || [],
-        currentNoteId: null,
-        lastInteractionDate: null
-    };
-
-    // Microphone Hardware Variable Registry Arrays
-    let mediaRecorder;
-    let audioChunks = [];
-    let recordSecondsCount = 0;
-    let clockTimerIntervalId = null;
-
-    function getFormattedDate() {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date().toLocaleDateString('en-US', options);
-    }
-
-    function initHome() {
-        const container = document.getElementById('notesContainer');
-        container.innerHTML = '';
-
-        if (appState.notes.length === 0) {
-            container.innerHTML = `<div class="empty-state">No notes found. Create your first note above!</div>`;
-            return;
+            // Close automatically
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
         }
 
-        let groupedNotes = { 'Uncategorized': [] };
+        // Selection manager to prevent editor focus stealing
+        document.querySelectorAll('.toolbar-icon').forEach(btn => {
+            btn.addEventListener('mousedown', (e) => {
+                // If it is regular toolbar actions, do not lose selection focus
+                if (btn.id !== 'theme-btn' && btn.id !== 'voice-record-btn' && btn.id !== 'ai-btn') {
+                    e.preventDefault();
+                }
+            });
+        });
 
-        appState.notes.forEach(note => {
-            const hashtagRegex = /#(\w+)/g;
-            const cleanText = note.content.replace(/<[^>]*>/g, ' ');
-            let matches = [...cleanText.matchAll(hashtagRegex)];
+        // Toolbar Action implementation
+        function executeFormat(e, command) {
+            if (e) e.preventDefault();
+            document.execCommand(command, false, null);
+            document.getElementById('noteContent').focus();
+        }
+
+        function changePenColor(color) {
+            document.execCommand('foreColor', false, color);
+            toggleThemePanel();
+            showNotification(`Pen color changed successfully!`, "success");
+        }
+
+        function toggleCursive(e) {
+            if (e) e.preventDefault();
+            isCursiveActive = !isCursiveActive;
             
-            if (matches.length === 0) {
-                groupedNotes['Uncategorized'].push(note);
+            if (isCursiveActive) {
+                document.execCommand('fontName', false, 'Caveat');
+                showNotification("Cursive Writing Active!", "success");
             } else {
-                let uniqueTags = [...new Set(matches.map(m => m[1]))];
-                uniqueTags.forEach(tag => {
-                    if (!groupedNotes[tag]) groupedNotes[tag] = [];
-                    groupedNotes[tag].push(note);
+                document.execCommand('fontName', false, 'Inter');
+                showNotification("Standard Font Restored.", "info");
+            }
+        }
+
+        // Theme management
+        function toggleThemePanel() {
+            document.getElementById('themePanel').classList.toggle('hidden');
+            document.getElementById('tablePanel').classList.add('hidden');
+            document.getElementById('floatCalc').classList.add('hidden');
+            document.getElementById('aiPanel').classList.add('hidden');
+        }
+
+        function changeNoteBg(color) {
+            currentNoteBg = color;
+            const sheet = document.getElementById('noteSheet');
+            sheet.style.backgroundColor = color;
+            
+            // Dark Mode adaptivity
+            if (color === '#0f172a') {
+                sheet.classList.add('text-white');
+                document.getElementById('noteTitle').classList.add('text-white');
+                document.getElementById('noteTitle').classList.remove('text-slate-800');
+            } else {
+                sheet.classList.remove('text-white');
+                document.getElementById('noteTitle').classList.remove('text-white');
+                document.getElementById('noteTitle').classList.add('text-slate-800');
+            }
+        }
+
+        // Table insertion
+        function toggleTablePanel() {
+            document.getElementById('tablePanel').classList.toggle('hidden');
+            document.getElementById('themePanel').classList.add('hidden');
+            document.getElementById('floatCalc').classList.add('hidden');
+            document.getElementById('aiPanel').classList.add('hidden');
+        }
+
+        function insertHTMLAtCaret(html) {
+            let sel, range;
+            if (window.getSelection) {
+                sel = window.getSelection();
+                if (sel.getRangeAt && sel.rangeCount) {
+                    range = sel.getRangeAt(0);
+                    range.deleteContents();
+                    
+                    let el = document.createElement("div");
+                    el.innerHTML = html;
+                    let frag = document.createDocumentFragment(), node, lastNode;
+                    while ((node = el.firstChild)) {
+                        lastNode = frag.appendChild(node);
+                    }
+                    range.insertNode(frag);
+                    if (lastNode) {
+                        range = range.cloneRange();
+                        range.setStartAfter(lastNode);
+                        range.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }
+                } else {
+                    document.getElementById('noteContent').innerHTML += html;
+                }
+            }
+        }
+
+        function insertGridTable() {
+            const rows = parseInt(document.getElementById('tblRows').value) || 3;
+            const cols = parseInt(document.getElementById('tblCols').value) || 3;
+            
+            let tableHTML = `<table class="w-full border-collapse border border-slate-300 my-4 table-auto rounded-xl overflow-hidden shadow-sm">`;
+            for (let r = 0; r < rows; r++) {
+                tableHTML += `<tr class="${r === 0 ? 'bg-slate-50' : ''}">`;
+                for (let c = 0; c < cols; c++) {
+                    tableHTML += `<td class="border border-slate-300 p-2.5 min-w-[60px] outline-none text-sm" contenteditable="true">Cell</td>`;
+                }
+                tableHTML += `</tr>`;
+            }
+            tableHTML += `</table><p>&nbsp;</p>`;
+            
+            document.getElementById('noteContent').focus();
+            insertHTMLAtCaret(tableHTML);
+            toggleTablePanel();
+            showNotification("Table successfully built and inserted!", "success");
+        }
+
+        // Voice Recorder implementation
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        async function toggleVoiceRecord() {
+            const voiceBtn = document.getElementById('voice-record-btn');
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    
+                    mediaRecorder.ondataavailable = e => {
+                        audioChunks.push(e.data);
+                    };
+                    
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = () => {
+                            const base64Audio = reader.result;
+                            const audioHTML = `<p class="my-3 flex items-center justify-start"><audio controls src="${base64Audio}" class="max-w-full rounded-xl shadow-sm bg-slate-50 p-1"></audio></p><p>&nbsp;</p>`;
+                            document.getElementById('noteContent').focus();
+                            insertHTMLAtCaret(audioHTML);
+                            showNotification("Audio voice clip inserted directly!", "success");
+                        };
+                    };
+                    
+                    mediaRecorder.start();
+                    isRecording = true;
+                    voiceBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="w-5 h-5 text-red-600 animate-pulse"><path d="M6 19h12V5H6v14z"/></svg>`;
+                    voiceBtn.classList.add('bg-red-50');
+                    showNotification("Recording audio... Click mic button again to stop.", "info");
+                } catch (err) {
+                    showNotification("Audio capability blocked or unavailable.", "error");
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                voiceBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" /></svg>`;
+                voiceBtn.classList.remove('bg-red-50');
+            }
+        }
+
+        // Image uploader with preview compression capability
+        function triggerImageUpload() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = event => {
+                        const imgHTML = `<p class="my-3 flex justify-center"><img src="${event.target.result}" class="max-w-full rounded-2xl shadow-md border border-slate-100 max-h-[350px] object-contain" /></p><p>&nbsp;</p>`;
+                        document.getElementById('noteContent').focus();
+                        insertHTMLAtCaret(imgHTML);
+                        showNotification("Image attached successfully!", "success");
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        }
+
+        // Calculator Interface implementations
+        function toggleCalc() {
+            document.getElementById('floatCalc').classList.toggle('hidden');
+            document.getElementById('themePanel').classList.add('hidden');
+            document.getElementById('tablePanel').classList.add('hidden');
+            document.getElementById('aiPanel').classList.add('hidden');
+            if (!document.getElementById('floatCalc').classList.contains('hidden')) {
+                document.getElementById('calcInput').focus();
+            }
+        }
+
+        function calcAppend(val) {
+            const calcInput = document.getElementById('calcInput');
+            calcInput.value += val;
+            updateLiveCalc();
+        }
+
+        function calcClear() {
+            document.getElementById('calcInput').value = '';
+            document.getElementById('calcLiveOutput').textContent = '';
+        }
+
+        function calcBackspace() {
+            const calcInput = document.getElementById('calcInput');
+            calcInput.value = calcInput.value.slice(0, -1);
+            updateLiveCalc();
+        }
+
+        function updateLiveCalc() {
+            const expr = document.getElementById('calcInput').value;
+            const output = document.getElementById('calcLiveOutput');
+            if(!expr) {
+                output.textContent = '';
+                return;
+            }
+            try {
+                // Evaluate mathematical operations securely
+                const sanitizedExpr = expr.replace(/[^0-89+\-*/().\s]/g, '');
+                const res = Function(`"use strict"; return (${sanitizedExpr})`)();
+                output.textContent = `= ${res}`;
+            } catch (e) {
+                output.textContent = '...';
+            }
+        }
+
+        function handleCalcEnter(e) {
+            if (e.key === 'Enter') {
+                runCalc();
+            }
+        }
+
+        function runCalc() { 
+            const val = document.getElementById('calcInput').value;
+            try {
+                const sanitizedVal = val.replace(/[^0-9+\-*/().\s]/g, '');
+                const res = Function(`"use strict"; return (${sanitizedVal})`)();
+                if(res !== undefined && !isNaN(res)) {
+                    document.getElementById('noteContent').focus();
+                    insertHTMLAtCaret(` ${val} = <strong>${res}</strong> `);
+                    toggleCalc();
+                    showNotification("Calculation result entered directly into Note!", "success");
+                } else {
+                    showNotification("Incomplete or invalid calculation formula.", "error");
+                }
+            } catch (err) {
+                showNotification("Invalid math layout. Try e.g. 5 + (12 * 3)", "error");
+            }
+        }
+
+        // ================= ✨ AI COMPANION SYSTEM INTEGRATION =================
+        let lastAIResult = "";
+
+        function toggleAIPanel() {
+            document.getElementById('aiPanel').classList.toggle('hidden');
+            document.getElementById('themePanel').classList.add('hidden');
+            document.getElementById('tablePanel').classList.add('hidden');
+            document.getElementById('floatCalc').classList.add('hidden');
+        }
+
+        async function callGemini(prompt, systemInstruction = "") {
+            const apiKey = ""; // Runtime automatically provisions this key
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+            
+            if (systemInstruction) {
+                payload.systemInstruction = { parts: [{ text: systemInstruction }] };
+            }
+
+            // Robust exponential backoff - retry up to 5 times (1s, 2s, 4s, 8s, 16s)
+            let delay = 1000;
+            for (let i = 0; i < 5; i++) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        return data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    }
+                } catch (e) {
+                    // Fail silently inside console as requested
+                }
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2;
+            }
+            throw new Error("Unable to contact Gemini AI. Please check connection and try again.");
+        }
+
+        async function runAIOperation(actionType) {
+            const noteContentEl = document.getElementById('noteContent');
+            const noteTitle = document.getElementById('noteTitle').value || 'Untitled Note';
+            const rawText = noteContentEl.innerText.trim();
+            const htmlContent = noteContentEl.innerHTML.trim();
+
+            if (!rawText && actionType !== 'custom') {
+                showNotification("Please write some content first so AI has context to work with!", "error");
+                return;
+            }
+
+            let prompt = "";
+            let systemInstruction = "You are Focus.note AI, an intelligent, sleek writing assistant. Output the direct finished text only. Avoid preamble commentary like 'Here is your note'. Make outputs readable, formatting with clean semantic HTML elements (like bold headers, checklists, or short lists) if it helps presentation.";
+
+            switch(actionType) {
+                case 'summarize':
+                    prompt = `Summarize this note elegantly. Note Title: "${noteTitle}". Content:\n\n${rawText}`;
+                    break;
+                case 'continue':
+                    prompt = `Adopt the writing tone, context, and vocabulary of this text. Continue writing the natural next paragraph cleanly. Do not repeat existing content. Text:\n\n${rawText}`;
+                    break;
+                case 'tasks':
+                    prompt = `Analyze this note and extract all implicit or explicit action items, follow-ups, and key tasks. Present them strictly as a structured checklist format utilizing bullet points. Text:\n\n${rawText}`;
+                    break;
+                case 'improve':
+                    prompt = `Carefully review this text. Polish grammar, professional phrasing, structure flow, vocabulary, and eliminate typos. Keep the original semantic layout intact. Text:\n\n${rawText}`;
+                    break;
+                case 'custom':
+                    const customPrompt = document.getElementById('aiCustomPrompt').value.trim();
+                    if(!customPrompt) {
+                        showNotification("Please enter a custom AI instruction first.", "error");
+                        return;
+                    }
+                    prompt = `Analyze this note: "${noteTitle}". Apply this custom user request carefully: "${customPrompt}". \n\nNote Content:\n${rawText}`;
+                    break;
+            }
+
+            // Open overlay loaders
+            document.getElementById('aiLoader').classList.remove('hidden');
+            document.getElementById('aiPanel').classList.add('hidden'); // Close tool panel
+
+            try {
+                const aiResult = await callGemini(prompt, systemInstruction);
+                if (aiResult) {
+                    lastAIResult = aiResult;
+                    
+                    // Display AI Output Drawer
+                    const resultContentBox = document.getElementById('aiResultContent');
+                    resultContentBox.innerHTML = aiResult.replace(/\n/g, '<br>');
+                    
+                    document.getElementById('aiResultOverlay').classList.remove('hidden');
+                    showNotification("AI successfully generated magic insights!", "success");
+                }
+            } catch (err) {
+                showNotification(err.message || "An AI generation error occurred.", "error");
+            } finally {
+                document.getElementById('aiLoader').classList.add('hidden');
+            }
+        }
+
+        function closeAIResult() {
+            document.getElementById('aiResultOverlay').classList.add('hidden');
+        }
+
+        function insertAIResult(mode) {
+            const contentBox = document.getElementById('noteContent');
+            const aiFormattedText = document.getElementById('aiResultContent').innerHTML;
+
+            if (mode === 'append') {
+                contentBox.focus();
+                // Append separated with elegant layout
+                const appendHTML = `<p>&nbsp;</p><hr class="border-purple-100 my-4"><div>${aiFormattedText}</div><p>&nbsp;</p>`;
+                insertHTMLAtCaret(appendHTML);
+                showNotification("AI output appended to the end of your note!", "success");
+            } else if (mode === 'cursor') {
+                contentBox.focus();
+                insertHTMLAtCaret(`<div>${aiFormattedText}</div>`);
+                showNotification("AI output inserted at cursor point!", "success");
+            } else if (mode === 'replace') {
+                contentBox.innerHTML = aiFormattedText;
+                showNotification("Note content replaced successfully!", "success");
+            }
+            closeAIResult();
+        }
+
+        // ================= EDITOR VIEW SYSTEM LOGIC =================
+
+        // View Control
+        function showView(view) {
+            document.getElementById('editorView').classList.toggle('hidden', view !== 'editor');
+            document.getElementById('dashboardView').classList.toggle('hidden', view !== 'dashboard');
+            
+            // Clean active view elements when jumping views
+            document.getElementById('themePanel').classList.add('hidden');
+            document.getElementById('tablePanel').classList.add('hidden');
+            document.getElementById('floatCalc').classList.add('hidden');
+            document.getElementById('aiPanel').classList.add('hidden');
+            document.getElementById('aiResultOverlay').classList.add('hidden');
+
+            if(view === 'dashboard') renderDashboard();
+        }
+
+        function openNewEditor() {
+            editingId = null;
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').innerHTML = '';
+            document.getElementById('noteDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('deleteBtn').classList.add('hidden');
+            changeNoteBg('#ffffff'); // reset color theme
+            showView('editor');
+        }
+
+        function openEditor(note) {
+            editingId = note.id;
+            document.getElementById('noteTitle').value = note.title === 'Untitled' ? '' : note.title;
+            document.getElementById('noteContent').innerHTML = note.content;
+            document.getElementById('noteDate').value = note.date;
+            document.getElementById('deleteBtn').classList.remove('hidden');
+            changeNoteBg(note.bgColor || '#ffffff');
+            showView('editor');
+        }
+
+        function saveNote() {
+            const title = document.getElementById('noteTitle').value.trim() || 'Untitled';
+            const content = document.getElementById('noteContent').innerHTML.trim();
+            const date = document.getElementById('noteDate').value;
+            
+            if (!content) {
+                showNotification("Cannot save an empty note.", "error");
+                return;
+            }
+
+            // Extract tags cleanly
+            const textContentOnly = document.getElementById('noteContent').innerText;
+            const tags = (textContentOnly.match(/#([a-zA-Z0-9_\-]+)/g) || []).map(t => t.substring(1).toLowerCase());
+            
+            if (editingId) {
+                notes = notes.map(n => n.id === editingId ? { ...n, title, content, date, tags, bgColor: currentNoteBg } : n);
+                showNotification("Changes saved successfully!", "success");
+            } else {
+                notes.push({ id: Date.now(), title, content, date, tags, bgColor: currentNoteBg });
+                showNotification("Note added to Dashboard!", "success");
+            }
+            
+            localStorage.setItem('focusNotes', JSON.stringify(notes));
+            showView('dashboard');
+        }
+
+        function confirmDeleteCurrent() {
+            document.getElementById('deleteModal').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.add('hidden');
+        }
+
+        function deleteCurrentNote() {
+            if (editingId) {
+                notes = notes.filter(n => n.id !== editingId);
+                localStorage.setItem('focusNotes', JSON.stringify(notes));
+                showNotification("Note was successfully deleted.", "info");
+                closeDeleteModal();
+                showView('dashboard');
+            }
+        }
+
+        // Search engine triggers
+        function searchNotes() {
+            searchQuery = document.getElementById('searchInput').value.trim().toLowerCase();
+            renderDashboard();
+        }
+
+        // UI Dashboard Renderer
+        function renderDashboard() {
+            const container = document.getElementById('notesContainer');
+            const tagsContainer = document.getElementById('tagsContainer');
+            
+            container.innerHTML = '';
+            tagsContainer.innerHTML = '';
+
+            let filtered = [...notes].sort((a,b) => new Date(b.date) - new Date(a.date));
+            
+            // Apply Tags Filter
+            if(activeTagFilter) {
+                filtered = filtered.filter(n => n.tags.includes(activeTagFilter));
+            }
+
+            // Apply Search Query Filter
+            if (searchQuery) {
+                filtered = filtered.filter(n => 
+                    n.title.toLowerCase().includes(searchQuery) || 
+                    n.content.toLowerCase().includes(searchQuery)
+                );
+            }
+
+            // Toggle zero state warning UI
+            if (filtered.length === 0) {
+                document.getElementById('noNotesMessage').classList.remove('hidden');
+            } else {
+                document.getElementById('noNotesMessage').classList.add('hidden');
+            }
+
+            // Build chronological date grouped items
+            const grouped = {};
+            filtered.forEach(n => {
+                if(!grouped[n.date]) grouped[n.date] = [];
+                grouped[n.date].push(n);
+            });
+
+            // Populate notes by headers
+            for (const date in grouped) {
+                // Header for the date group
+                const dateGroupContainer = document.createElement('div');
+                dateGroupContainer.className = 'w-full col-span-full mt-4 mb-2';
+                
+                // Formatted display date
+                const formattedDate = new Date(date).toLocaleDateString('en-US', {
+                    weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'
+                });
+
+                dateGroupContainer.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">${formattedDate}</span>
+                        <div class="h-px bg-slate-100 flex-grow"></div>
+                    </div>
+                `;
+                container.appendChild(dateGroupContainer);
+
+                grouped[date].forEach(note => {
+                    const card = document.createElement('div');
+                    const isDark = note.bgColor === '#0f172a';
+                    
+                    card.className = `masonry-item rounded-3xl border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition duration-200 cursor-pointer p-6 flex flex-col justify-between`;
+                    card.style.backgroundColor = note.bgColor || '#ffffff';
+                    
+                    // Style adjust dynamically per palette chosen
+                    if(isDark) {
+                        card.classList.add('text-white', 'border-slate-800');
+                    } else {
+                        card.classList.add('text-slate-800', 'border-slate-100');
+                    }
+
+                    card.onclick = () => openEditor(note);
+                    
+                    // Render miniature tag pills within note card
+                    let pills = '';
+                    if (note.tags && note.tags.length > 0) {
+                        pills = `<div class="flex flex-wrap gap-1 mt-4">` + 
+                            note.tags.map(t => `<span class="px-2 py-0.5 text-[9px] font-bold rounded-md ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-500'}">#${t}</span>`).join('') + 
+                            `</div>`;
+                    }
+
+                    card.innerHTML = `
+                        <div>
+                            <h3 class="font-bold text-base tracking-tight mb-2 truncate">${note.title}</h3>
+                            <div class="text-xs ${isDark ? 'text-slate-300' : 'text-slate-500'} line-clamp-5 prose max-w-none">${note.content}</div>
+                        </div>
+                        ${pills}
+                    `;
+                    container.appendChild(card);
                 });
             }
-        });
 
-        for (let category in groupedNotes) {
-            if (groupedNotes[category].length === 0) continue;
-
-            const section = document.createElement('div');
-            section.className = 'tag-section';
-
-            const heading = document.createElement('div');
-            heading.className = 'tag-title';
-            heading.innerHTML = category === 'Uncategorized' ? `📂 Uncategorized` : `🏷️ #${category}`;
-            section.appendChild(heading);
-
-            const grid = document.createElement('div');
-            grid.className = 'notes-grid';
-
-            groupedNotes[category].forEach(note => {
-                const card = document.createElement('div');
-                card.className = 'note-card';
-                card.onclick = () => openExistingNoteView(note.id);
-
-                let tempDiv = document.createElement('div');
-                tempDiv.innerHTML = note.content;
-                let rawText = tempDiv.textContent || tempDiv.innerText || '';
-                const textSnippet = rawText.replace(/#\w+/g, '').trim();
-
-                card.innerHTML = `
-                    <button class="delete-card-btn" onclick="deleteNote(event, '${note.id}')">🗑️</button>
-                    <div class="note-card-title">${note.title || 'Untitled Note'}</div>
-                    <div class="note-card-snippet">${textSnippet.substring(0,120) || 'Empty content...'}</div>
-                `;
-                grid.appendChild(card);
-            });
-
-            section.appendChild(grid);
-            container.appendChild(section);
-        }
-    }
-
-    /* SOLID HARDWARE-LINKED OVERLAY MICROPHONE RECORDING MACHINE */
-    function openRecordingHUD() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            alert("⚠️ WebView API Compatibility Check Failed:\n\nYour mobile wrapper does not allow hardware audio capture streams inside local paths.\n\nFix: Make sure you checked 'Microphone Access' in your Website 2 APK Builder dashboard before building your APK.");
-            return;
-        }
-
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(stream => {
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-                
-                mediaRecorder.ondataavailable = event => {
-                    if (event.data.size > 0) audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                    const fileReader = new FileReader();
+            // Populate sidebar list tags
+            const allTags = [...new Set(notes.flatMap(n => n.tags || []))];
+            
+            // Header display of tag pills
+            if (allTags.length === 0) {
+                tagsContainer.innerHTML = `<p class="text-xs text-slate-400 italic">No tags found. Add tagged elements in editing mode (e.g., #todo).</p>`;
+            } else {
+                allTags.forEach(tag => {
+                    const el = document.createElement('button');
+                    const isActive = activeTagFilter === tag;
                     
-                    // FIXED: Replaced readAsText with readAsDataURL to properly capture raw audio bits
-                    fileReader.readAsDataURL(audioBlob);
-                    
-                    fileReader.onloadend = () => {
-                        const inlinePlayerHtml = `<p><br><audio controls src="${fileReader.result}"></audio><br></p>`;
-                        const canvas = document.getElementById('noteContent');
-                        canvas.focus();
-                        document.execCommand('insertHTML', false, inlinePlayerHtml);
-                        appendAttachmentBadge('🎙️ Audio Note File');
+                    el.className = `text-xs px-3 py-1.5 rounded-xl font-medium border transition duration-150 ${
+                        isActive 
+                        ? 'bg-slate-900 border-slate-900 text-white shadow-sm' 
+                        : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                    }`;
+                    el.textContent = '#' + tag;
+                    el.onclick = () => {
+                        activeTagFilter = isActive ? null : tag;
+                        renderDashboard();
                     };
-                };
-
-                audioChunks = [];
-                mediaRecorder.start();
-                document.getElementById('recordingHud').classList.add('active');
-                
-                recordSecondsCount = 0;
-                document.getElementById('recordingTimer').innerText = "00:00";
-                clockTimerIntervalId = setInterval(() => {
-                    recordSecondsCount++;
-                    const mins = String(Math.floor(recordSecondsCount / 60)).padStart(2, '0');
-                    const secs = String(recordSecondsCount % 60).padStart(2, '0');
-                    document.getElementById('recordingTimer').innerText = `${mins}:${secs}`;
-                }, 1000);
-            })
-            .catch(err => {
-                alert("⚠️ Microphone Access Denied!\n\nPlease check your phone settings and confirm the app has system microphone permissions.");
-            });
-    }
-
-    function stopAudioRecordingStream() {
-        if (mediaRecorder && mediaRecorder.state !== "inactive") {
-            mediaRecorder.stop();
-            mediaRecorder.stream.getTracks().forEach(track => track.stop());
-        }
-        clearInterval(clockTimerIntervalId);
-        document.getElementById('recordingHud').classList.remove('active');
-    }
-
-    /* DIRECT AUTO-UPLOAD TO GOOGLE DRIVE PIPELINE */
-    function autoUploadAllNotesToDrive() {
-        if (appState.notes.length === 0) {
-            alert("⚠️ Your note dataset is empty. Write a note first before running file backups.");
-            return;
-        }
-
-        const backupBlob = new Blob([JSON.stringify(appState.notes, null, 2)], { type: 'application/json' });
-        const backupFileName = `Notebook_Cloud_Backup_${new Date().toISOString().slice(0,10)}.json`;
-
-        alert(`☁️ Processing note backups!\n\nYour backup file will download, and your Google Drive workspace will open right up.\n\nSimply select "Upload" inside Drive to save it.`);
-
-        const downloadAnchor = document.createElement('a');
-        downloadAnchor.href = URL.createObjectURL(backupBlob);
-        downloadAnchor.download = backupFileName;
-        document.body.appendChild(downloadAnchor);
-        downloadAnchor.click();
-        downloadAnchor.remove();
-
-        setTimeout(() => {
-            window.open('https://drive.google.com/drive/my-drive', '_blank');
-        }, 1000);
-    }
-
-    function directRestoreFromDriveOrLocal() {
-        const fileSelector = document.createElement('input');
-        fileSelector.setAttribute("type", "file");
-        fileSelector.setAttribute("accept", ".json");
-        
-        fileSelector.onchange = (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.readAsText(file, 'UTF-8');
-            
-            reader.onload = (readerEvent) => {
-                try {
-                    const importedData = JSON.parse(readerEvent.target.result);
-                    if (Array.isArray(importedData)) {
-                        if (confirm("⚠️ Warning: Restoring this file will overwrite your local device workspace notes. Proceed?")) {
-                            appState.notes = importedData;
-                            localStorage.setItem('sleek_notes_pro_v15', JSON.stringify(appState.notes));
-                            initHome();
-                            alert("🚀 Success! Notebook state populated and restored perfectly.");
-                        }
-                    } else { alert("❌ Format error: Selected file backup structure is invalid."); }
-                } catch(err) { alert("❌ Failed to parse data contents."); }
+                    tagsContainer.appendChild(el);
+                });
             }
-        };
-        fileSelector.click();
-    }
-
-    function openNewNoteView() {
-        appState.currentNoteId = 'NOTE-' + Date.now();
-        appState.lastInteractionDate = new Date().toDateString();
-
-        document.getElementById('noteTitle').value = '';
-        document.getElementById('noteContent').innerHTML = '';
-        document.getElementById('currentDateDisplay').textContent = getFormattedDate();
-        document.getElementById('attachmentsContainer').innerHTML = '';
-        
-        document.getElementById('paperColorPicker').value = '#1e293b';
-        document.getElementById('fontColorPicker').value = '#f8fafc';
-        applyWorkspaceColors();
-
-        switchView('editorView');
-    }
-
-    function openExistingNoteView(id) {
-        const note = appState.notes.find(n => n.id === id);
-        if (!note) return;
-
-        appState.currentNoteId = note.id;
-        appState.lastInteractionDate = new Date().toDateString();
-
-        document.getElementById('noteTitle').value = note.title;
-        document.getElementById('noteContent').innerHTML = note.content;
-        document.getElementById('currentDateDisplay').textContent = note.date;
-        
-        document.getElementById('paperColorPicker').value = note.paperColor || '#1e293b';
-        document.getElementById('fontColorPicker').value = note.fontColor || '#f8fafc';
-        applyWorkspaceColors();
-        
-        renderAttachments(note.attachments || []);
-        switchView('editorView');
-    }
-
-    function applyWorkspaceColors() {
-        const paperColor = document.getElementById('paperColorPicker').value;
-        const fontColor = document.getElementById('fontColorPicker').value;
-        document.documentElement.style.setProperty('--note-paper-color', paperColor);
-        document.documentElement.style.setProperty('--note-font-color', fontColor);
-    }
-
-    function handleContentTyping(event) {
-        const todayStr = new Date().toDateString();
-        
-        if (appState.lastInteractionDate && appState.lastInteractionDate !== todayStr) {
-            const workspace = document.getElementById('noteContent');
-            const separatorHtml = `<div class="timeline-separator" contenteditable="false">✨ Continuous Entry: ${getFormattedDate()}</div><br>`;
-            
-            workspace.innerHTML += separatorHtml;
-            appState.lastInteractionDate = todayStr;
-            document.getElementById('currentDateDisplay').textContent = getFormattedDate();
-            
-            const range = document.createRange();
-            const sel = window.getSelection();
-            range.selectNodeContents(workspace);
-            range.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
-    }
-
-    function insertTableWidget() {
-        const rows = prompt("Enter rows count:", "3");
-        const cols = prompt("Enter columns count:", "3");
-        if (!rows || !cols || isNaN(rows) || isNaN(cols)) return;
-
-        let tableHtml = '<table class="note-table">';
-        for (let i = 0; i < rows; i++) {
-            tableHtml += '<tr>';
-            for (let j = 0; j < cols; j++) {
-                tableHtml += i === 0 ? `<th contenteditable="true">Header</th>` : `<td contenteditable="true">Data</td>`;
-            }
-            tableHtml += '</tr>';
-        }
-        tableHtml += '</table><p><br></p>';
-
-        document.getElementById('noteContent').focus();
-        document.execCommand('insertHTML', false, tableHtml);
-    }
-
-    function printActiveNote() {
-        const title = document.getElementById('noteTitle').value || 'Untitled Note';
-        const date = document.getElementById('currentDateDisplay').textContent;
-        const content = document.getElementById('noteContent').innerHTML;
-
-        document.getElementById('printModalDate').innerText = date;
-        document.getElementById('printModalTitle').innerText = title;
-        document.getElementById('printModalContent').innerHTML = content;
-        document.getElementById('printPreviewModal').classList.add('active');
-
-        try { window.print(); } catch (e) { console.log("Blocked by mobile wrapper container."); }
-    }
-
-    function closePrintPreview() { document.getElementById('printPreviewModal').classList.remove('active'); }
-
-    function getCleanNoteText() {
-        const title = document.getElementById('noteTitle').value || 'Untitled Note';
-        let tempDiv = document.createElement('div');
-        tempDiv.innerHTML = document.getElementById('noteContent').innerHTML;
-        return `Title: ${title}\n\nContent:\n${tempDiv.textContent || tempDiv.innerText || ''}`;
-    }
-
-    function fallbackCopyToClipboard(text, targetService) {
-        navigator.clipboard.writeText(text).then(() => {
-            alert(`📋 Protocol redirection locked by browser container.\n\nNote copied instead! Go ahead and paste into ${targetService}.`);
-        }).catch(() => {
-            const textArea = document.createElement("textarea");
-            textArea.value = text; document.body.appendChild(textArea);
-            textArea.select(); document.execCommand('copy');
-            document.body.removeChild(textArea);
-            alert(`📋 Saved backup text to device clipboard for ${targetService}!`);
-        });
-    }
-
-    function shareViaEmail() {
-        const title = document.getElementById('noteTitle').value || 'Note Summary';
-        const noteText = getCleanNoteText();
-        const mailtoUrl = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(noteText)}`;
-        const syncWindow = window.open(mailtoUrl, '_blank');
-        if (!syncWindow || syncWindow.closed || typeof syncWindow === 'undefined') { fallbackCopyToClipboard(noteText, "your Email app"); }
-    }
-
-    function shareViaWhatsApp() {
-        const noteText = getCleanNoteText();
-        const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(noteText)}`;
-        const syncWindow = window.open(whatsappUrl, '_blank');
-        if (!syncWindow) { fallbackCopyToClipboard(noteText, "WhatsApp"); }
-    }
-
-    /* Calculator Mechanics */
-    let calcExpression = "";
-    function toggleCalculator() { document.getElementById('calcWidget').classList.toggle('active'); }
-    function inputCalcNum(num) {
-        const screen = document.getElementById('calcScreen');
-        if (screen.innerText === "0" && num !== ".") calcExpression = "";
-        calcExpression += num; screen.innerText = calcExpression;
-    }
-    function inputCalcOp(op) { calcExpression += " " + op + " "; document.getElementById('calcScreen').innerText = calcExpression; }
-    function clearCalc() { calcExpression = ""; document.getElementById('calcScreen').innerText = "0"; }
-    function calculateResult() {
-        try {
-            const result = Function('"use strict";return (' + calcExpression + ')')();
-            document.getElementById('calcScreen').innerText = result; calcExpression = result.toString();
-        } catch (e) { document.getElementById('calcScreen').innerText = "Error"; calcExpression = ""; }
-    }
-
-    /* Attachments Utilities */
-    function triggerImageAttachment() { alert("🖼️ Image entry attached."); appendAttachmentBadge('🖼️ Image_File.png'); }
-    function triggerLinkAttachment() {
-        const url = prompt("Enter hyperlink URL:", "https://");
-        if(url && url !== "https://") appendAttachmentBadge(`🔗 Link: ${url}`);
-    }
-    function appendAttachmentBadge(label) {
-        const container = document.getElementById('attachmentsContainer');
-        const badge = document.createElement('span');
-        badge.className = 'attachment-badge'; badge.innerText = label; container.appendChild(badge);
-    }
-    function renderAttachments(attachments) {
-        const container = document.getElementById('attachmentsContainer'); container.innerHTML = '';
-        attachments.forEach(att => appendAttachmentBadge(att));
-    }
-
-    function saveAndGoHome() {
-        const title = document.getElementById('noteTitle').value.trim();
-        const content = document.getElementById('noteContent').innerHTML;
-        const date = document.getElementById('currentDateDisplay').textContent;
-        const paperColor = document.getElementById('paperColorPicker').value;
-        const fontColor = document.getElementById('fontColorPicker').value;
-
-        let tempDiv = document.createElement('div');
-        tempDiv.innerHTML = content;
-        
-        if (!title && !tempDiv.textContent.trim() && tempDiv.getElementsByTagName('table').length === 0) {
-            switchView('homeView'); initHome(); return;
         }
 
-        let attachmentsArray = [];
-        document.querySelectorAll('.attachment-badge').forEach(el => attachmentsArray.push(el.innerText));
-
-        const existingIndex = appState.notes.findIndex(n => n.id === appState.currentNoteId);
-        const notePayload = {
-            id: appState.currentNoteId, title: title || 'Untitled Note', content: content, date: date,
-            attachments: attachmentsArray, paperColor: paperColor, fontColor: fontColor
-        };
-
-        if (existingIndex > -1) appState.notes[existingIndex] = notePayload;
-        else appState.notes.unshift(notePayload);
-
-        localStorage.setItem('sleek_notes_pro_v15', JSON.stringify(appState.notes));
-        switchView('homeView'); initHome();
-    }
-
-    function deleteNote(event, id) {
-        event.stopPropagation(); 
-        if(confirm("Discard this note permanently?")) {
-            appState.notes = appState.notes.filter(n => n.id !== id);
-            localStorage.setItem('sleek_notes_pro_v15', JSON.stringify(appState.notes));
-            initHome();
-        }
-    }
-
-    function switchView(viewId) {
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.getElementById(viewId).classList.add('active');
-    }
-
-    window.onload = function() { initHome(); };
-</script>
+        // Initialize App View to Dashboard
+        showView('dashboard');
+    </script>
 </body>
 </html>
